@@ -41,7 +41,7 @@ export default async function TratamentosPage() {
               <div>
                 <Link
                   href={`/reclamacoes/${t.reclamacaoId}`}
-                  className="font-medium text-[var(--brand)] hover:underline"
+                  className="font-medium text-black hover:underline"
                 >
                   {t.reclamacao.protocolo}
                 </Link>

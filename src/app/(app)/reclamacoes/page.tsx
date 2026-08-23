@@ -105,7 +105,7 @@ export default async function ReclamacoesPage({
             {items.map((item) => (
               <tr key={item.id} className="border-b border-[var(--border)] hover:bg-[var(--surface)]">
                 <td className="px-4 py-3">
-                  <Link href={`/reclamacoes/${item.id}`} className="font-medium text-[var(--brand)] hover:underline">
+                  <Link href={`/reclamacoes/${item.id}`} className="font-medium text-black hover:underline">
                     {item.protocolo}
                   </Link>
                   <p className="text-xs text-[var(--muted)]">

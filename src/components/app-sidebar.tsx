@@ -52,13 +52,20 @@ export function AppSidebar({
 
   return (
     <aside className="flex h-screen w-64 flex-col border-r border-[var(--border)] bg-[var(--sidebar)] text-white">
-      <div className="border-b border-white/10 px-5 py-6">
-        <p className="text-xs uppercase tracking-[0.2em] text-[var(--brand-soft)]">
-          Grupo Sorria
-        </p>
-        <h1 className="mt-1 font-[family-name:var(--font-display)] text-2xl">
-          SISTEMA GRC
-        </h1>
+      <div className="flex items-center gap-3 border-b border-white/10 px-5 py-6">
+        <img
+          src="/logo-sorria.png"
+          alt="Sorria Goiás"
+          className="h-12 w-12 rounded-md object-cover"
+        />
+        <div>
+          <p className="text-xs uppercase tracking-[0.2em] text-[var(--brand)]">
+            Grupo Sorria
+          </p>
+          <h1 className="mt-1 font-[family-name:var(--font-display)] text-2xl">
+            SISTEMA GRC
+          </h1>
+        </div>
       </div>
       <nav className="flex-1 space-y-1 overflow-y-auto p-3">
         {links.map((item) => {
@@ -74,7 +81,7 @@ export function AppSidebar({
               className={cn(
                 "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition",
                 active
-                  ? "bg-[var(--brand)] text-white"
+                  ? "bg-[var(--brand)] text-black"
                   : "text-white/80 hover:bg-white/10 hover:text-white"
               )}
             >
@@ -98,7 +105,7 @@ export function AppSidebar({
                   className={cn(
                     "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition",
                     active
-                      ? "bg-[var(--brand)] text-white"
+                      ? "bg-[var(--brand)] text-black"
                       : "text-white/80 hover:bg-white/10 hover:text-white"
                   )}
                 >

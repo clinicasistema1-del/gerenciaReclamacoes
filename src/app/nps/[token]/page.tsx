@@ -29,7 +29,7 @@ export default async function NpsPublicPage({
     <div className="flex min-h-screen items-center justify-center bg-[var(--surface)] px-4 py-10">
       <Card className="w-full max-w-lg">
         <CardHeader>
-          <p className="text-xs uppercase tracking-[0.2em] text-[var(--brand)]">
+          <p className="text-xs uppercase tracking-[0.2em] text-black">
             Grupo Sorria
           </p>
           <CardTitle className="font-[family-name:var(--font-display)] text-3xl">
@@ -53,7 +53,7 @@ export default async function NpsPublicPage({
                   {Array.from({ length: 11 }, (_, i) => (
                     <label
                       key={i}
-                      className="flex cursor-pointer flex-col items-center rounded-md border border-[var(--border)] py-2 text-sm hover:border-[var(--brand)] has-[:checked]:bg-[var(--brand)] has-[:checked]:text-white"
+                      className="flex cursor-pointer flex-col items-center rounded-md border border-[var(--border)] py-2 text-sm hover:border-[var(--brand)] has-[:checked]:bg-[var(--brand)] has-[:checked]:text-black"
                     >
                       <input
                         type="radio"

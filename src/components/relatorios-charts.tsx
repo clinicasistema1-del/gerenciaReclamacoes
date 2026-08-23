@@ -29,7 +29,7 @@ function ChartCard({ title, data }: { title: string; data: Serie[] }) {
               <XAxis dataKey="name" tick={{ fontSize: 11 }} interval={0} angle={-20} textAnchor="end" height={60} />
               <YAxis allowDecimals={false} />
               <Tooltip />
-              <Bar dataKey="value" fill="#0f7a5f" radius={[6, 6, 0, 0]} />
+              <Bar dataKey="value" fill="#ffce00" radius={[6, 6, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         )}

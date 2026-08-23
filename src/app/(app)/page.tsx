@@ -51,22 +51,22 @@ export default async function HomePage() {
 
   return (
     <div className="space-y-8">
-      <div className="rounded-2xl bg-[linear-gradient(135deg,#12352c_0%,#0f7a5f_55%,#1c4f42_100%)] p-8 text-white shadow-lg">
-        <p className="text-sm uppercase tracking-[0.2em] text-[var(--brand-soft)]">
+      <div className="rounded-2xl bg-[linear-gradient(135deg,#ffce00_0%,#ffe566_55%,#fff176_100%)] p-8 text-black shadow-lg">
+        <p className="text-sm uppercase tracking-[0.2em] text-black/70">
           Home GRC / CRC
         </p>
         <h1 className="mt-2 font-[family-name:var(--font-display)] text-4xl">
           Central de reclamações
         </h1>
-        <p className="mt-2 max-w-2xl text-white/80">
+        <p className="mt-2 max-w-2xl text-black/70">
           Protocolos, prazos e visão da rede em um só lugar — para responder mais
           rápido e com mais controle.
         </p>
         <div className="mt-6 flex flex-wrap gap-3">
-          <Button asChild variant="secondary">
+          <Button asChild className="bg-black text-[var(--brand)] hover:bg-black/90">
             <Link href="/reclamacoes">Gestão de reclamações</Link>
           </Button>
-          <Button asChild variant="outline" className="border-white/30 bg-transparent text-white hover:bg-white/10">
+          <Button asChild variant="outline" className="border-black/20 bg-white/50 text-black hover:bg-white">
             <Link href="/relatorios">Relatórios</Link>
           </Button>
         </div>

@@ -78,7 +78,7 @@ export default async function NpsPage() {
               <CardTitle className="text-base">
                 <Link
                   href={`/reclamacoes/${r.reclamacaoId}`}
-                  className="text-[var(--brand)] hover:underline"
+                  className="text-black hover:underline"
                 >
                   {r.reclamacao.protocolo}
                 </Link>
@@ -100,7 +100,7 @@ export default async function NpsPage() {
                 )}
                 <a
                   href={r.url}
-                  className="mt-2 inline-block text-xs text-[var(--brand)] hover:underline"
+                  className="mt-2 inline-block text-xs text-black hover:underline"
                   target="_blank"
                   rel="noreferrer"
                 >

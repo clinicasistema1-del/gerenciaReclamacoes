@@ -15,6 +15,10 @@ const display = Fraunces({
 export const metadata: Metadata = {
   title: "SISTEMA GRC · Grupo Sorria",
   description: "Gestão de reclamações para franquias de clínicas odontológicas",
+  icons: {
+    icon: "/favicon.png",
+    apple: "/favicon.png",
+  },
 };
 
 export default function RootLayout({

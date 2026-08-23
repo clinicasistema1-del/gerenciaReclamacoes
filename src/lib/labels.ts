@@ -1,0 +1,54 @@
+export const roleLabels: Record<string, string> = {
+  ADMIN: "Administrador",
+  SAC: "SAC / CRC",
+  COORDENACAO: "Coordenação",
+  GERENCIA: "Gerência",
+  DENTISTA: "Dentista",
+  AUDITORIA: "Auditoria",
+  DIRETORIA: "Diretoria",
+};
+
+export const canalLabels: Record<string, string> = {
+  WHATSAPP: "WhatsApp",
+  INSTAGRAM: "Instagram",
+  GOOGLE: "Google",
+  RECLAME_AQUI: "Reclame Aqui",
+  TELEFONE: "Telefone",
+  CRC: "CRC",
+  EMAIL: "E-mail",
+  OUTRO: "Outro",
+};
+
+export const motivoLabels: Record<string, string> = {
+  ATENDIMENTO: "Atendimento",
+  COBRANCA: "Cobrança",
+  QUALIDADE_TRATAMENTO: "Qualidade do tratamento",
+  AGENDAMENTO: "Agendamento",
+  FINANCEIRO: "Financeiro",
+  OUTRO: "Outro",
+};
+
+export const prioridadeLabels: Record<string, string> = {
+  BAIXA: "Baixa",
+  MEDIA: "Média",
+  ALTA: "Alta",
+  URGENTE: "Urgente",
+};
+
+export const statusLabels: Record<string, string> = {
+  ABERTA: "Aberta",
+  EM_ANDAMENTO: "Em andamento",
+  ATRASADA: "Atrasada",
+  AGUARDANDO_PARECER: "Aguardando parecer",
+  CONCLUIDA: "Concluída",
+  ENCERRADA: "Encerrada",
+};
+
+export const statusColors: Record<string, string> = {
+  ABERTA: "bg-sky-100 text-sky-800",
+  EM_ANDAMENTO: "bg-amber-100 text-amber-800",
+  ATRASADA: "bg-red-100 text-red-800",
+  AGUARDANDO_PARECER: "bg-violet-100 text-violet-800",
+  CONCLUIDA: "bg-emerald-100 text-emerald-800",
+  ENCERRADA: "bg-slate-100 text-slate-700",
+};

@@ -1,36 +1,62 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# SISTEMA GRC · Grupo Sorria
 
-## Getting Started
+Gestão de reclamações para franquias de clínicas odontológicas.
 
-First, run the development server:
+## Stack
+
+- Next.js (App Router) + TypeScript
+- Tailwind CSS + componentes próprios (padrão shadcn)
+- PostgreSQL + Prisma
+- Better Auth (papéis: Admin, SAC, Coordenação, Gerência, Dentista, Auditoria, Diretoria)
+- Resend (e-mails de SLA)
+- Recharts (relatórios)
+- Vercel Cron (`/api/cron/sla`) + QR Code NPS
+
+## Pré-requisitos
+
+- Node.js 20+
+- Docker Desktop (Postgres local) **ou** Postgres/Neon na nuvem
+
+## Setup local
 
 ```bash
+# 1. Subir Postgres (porta 5433 no host)
+docker compose up -d
+
+# 2. Instalar dependências
+npm install
+
+# 3. Configurar .env (já existe um exemplo local)
+# DATABASE_URL=postgresql://postgres:postgres@localhost:5433/sistema_grc?schema=public
+
+# 4. Criar schema e dados iniciais
+npm run db:setup
+
+# 5. Rodar
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Acesse [http://localhost:3000](http://localhost:3000)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+**Login padrão:** `admin@gmail.com` / `admin`
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Deploy (Vercel + Neon)
 
-## Learn More
+1. Crie um banco Postgres no Neon e copie a `DATABASE_URL`
+2. Faça deploy do projeto na Vercel
+3. Configure as variáveis de `.env.example` no painel da Vercel
+4. Rode `npx prisma migrate deploy` (ou `db push`) no banco de produção
+5. Rode o seed se desejar usuários iniciais
+6. O cron horário chama `/api/cron/sla` com header `Authorization: Bearer $CRON_SECRET`
 
-To learn more about Next.js, take a look at the following resources:
+## Módulos
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- Home GRC / CRC
+- Gestão de reclamações (protocolos)
+- Agenda GRC
+- Tratamentos vinculados
+- Relatórios executivos
+- Gestão de NPS (QR Code)
+- Admin: usuários, clínicas e esteira
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Integrações automáticas de WhatsApp/Instagram/Google/Reclame Aqui ficam fora do MVP — abertura manual pelo SAC.

@@ -1,0 +1,241 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  SAC
+  COORDENACAO
+  GERENCIA
+  DENTISTA
+  AUDITORIA
+  DIRETORIA
+}
+
+enum CanalOrigem {
+  WHATSAPP
+  INSTAGRAM
+  GOOGLE
+  RECLAME_AQUI
+  TELEFONE
+  CRC
+  EMAIL
+  OUTRO
+}
+
+enum MotivoReclamacao {
+  ATENDIMENTO
+  COBRANCA
+  QUALIDADE_TRATAMENTO
+  AGENDAMENTO
+  FINANCEIRO
+  OUTRO
+}
+
+enum Prioridade {
+  BAIXA
+  MEDIA
+  ALTA
+  URGENTE
+}
+
+enum StatusReclamacao {
+  ABERTA
+  EM_ANDAMENTO
+  ATRASADA
+  AGUARDANDO_PARECER
+  CONCLUIDA
+  ENCERRADA
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String
+  email         String    @unique
+  emailVerified Boolean   @default(false)
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  role          Role      @default(SAC)
+  clinicId      String?
+  clinic        Clinic?   @relation(fields: [clinicId], references: [id])
+  active        Boolean   @default(true)
+  sessions      Session[]
+  accounts      Account[]
+  reclamacoesResponsavel Reclamacao[] @relation("Responsavel")
+  reclamacoesCriadas     Reclamacao[] @relation("Criador")
+  historicos             HistoricoReclamacao[]
+  tratamentos            Tratamento[] @relation("ResponsavelTratamento")
+
+  @@map("user")
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  expiresAt DateTime
+  token     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id @default(cuid())
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id @default(cuid())
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@map("verification")
+}
+
+model Clinic {
+  id        String   @id @default(cuid())
+  name      String
+  city      String
+  state     String
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  users     User[]
+  reclamacoes Reclamacao[]
+
+  @@map("clinic")
+}
+
+model EsteiraEtapa {
+  id           String   @id @default(cuid())
+  nome         String
+  ordem        Int
+  prazoHoras   Int
+  roleAlvo     Role
+  emailAviso   Boolean  @default(true)
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  reclamacoes  Reclamacao[]
+
+  @@unique([ordem])
+  @@map("esteira_etapa")
+}
+
+model Reclamacao {
+  id              String            @id @default(cuid())
+  protocolo       String            @unique
+  pacienteNome    String
+  pacienteContato String?
+  clinicId        String
+  clinic          Clinic            @relation(fields: [clinicId], references: [id])
+  canal           CanalOrigem
+  motivo          MotivoReclamacao
+  servico         String?
+  prioridade      Prioridade        @default(MEDIA)
+  descricao       String
+  status          StatusReclamacao  @default(ABERTA)
+  etapaId         String?
+  etapa           EsteiraEtapa?     @relation(fields: [etapaId], references: [id])
+  responsavelId   String?
+  responsavel     User?             @relation("Responsavel", fields: [responsavelId], references: [id])
+  criadoPorId     String
+  criadoPor       User              @relation("Criador", fields: [criadoPorId], references: [id])
+  prazoEm         DateTime?
+  atrasadaEm      DateTime?
+  concluidaEm     DateTime?
+  encerradaEm     DateTime?
+  parecerFinal    String?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  historicos      HistoricoReclamacao[]
+  tratamentos     Tratamento[]
+  nps             NpsResposta?
+  escalonamentos  EscalonamentoLog[]
+
+  @@index([status])
+  @@index([clinicId])
+  @@index([responsavelId])
+  @@index([prazoEm])
+  @@map("reclamacao")
+}
+
+model HistoricoReclamacao {
+  id            String   @id @default(cuid())
+  reclamacaoId  String
+  reclamacao    Reclamacao @relation(fields: [reclamacaoId], references: [id], onDelete: Cascade)
+  usuarioId     String?
+  usuario       User?    @relation(fields: [usuarioId], references: [id])
+  acao          String
+  detalhe       String?
+  createdAt     DateTime @default(now())
+
+  @@map("historico_reclamacao")
+}
+
+model Tratamento {
+  id             String     @id @default(cuid())
+  reclamacaoId   String
+  reclamacao     Reclamacao @relation(fields: [reclamacaoId], references: [id], onDelete: Cascade)
+  descricao      String
+  status         String     @default("EM_ANDAMENTO")
+  responsavelId  String?
+  responsavel    User?      @relation("ResponsavelTratamento", fields: [responsavelId], references: [id])
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  @@map("tratamento")
+}
+
+model NpsResposta {
+  id            String     @id @default(cuid())
+  reclamacaoId  String     @unique
+  reclamacao    Reclamacao @relation(fields: [reclamacaoId], references: [id], onDelete: Cascade)
+  token         String     @unique @default(cuid())
+  nota          Int?
+  comentario    String?
+  respondidoEm  DateTime?
+  createdAt     DateTime   @default(now())
+
+  @@map("nps_resposta")
+}
+
+model EscalonamentoLog {
+  id            String     @id @default(cuid())
+  reclamacaoId  String
+  reclamacao    Reclamacao @relation(fields: [reclamacaoId], references: [id], onDelete: Cascade)
+  etapaOrdem    Int
+  emailDestino  String
+  enviadoEm     DateTime   @default(now())
+  sucesso       Boolean    @default(true)
+  erro          String?
+
+  @@map("escalonamento_log")
+}

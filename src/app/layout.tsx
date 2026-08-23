@@ -16,7 +16,10 @@ export const metadata: Metadata = {
   title: "SISTEMA GRC · Grupo Sorria",
   description: "Gestão de reclamações para franquias de clínicas odontológicas",
   icons: {
-    icon: "/favicon.png",
+    icon: [
+      { url: "/favicon.ico", sizes: "32x32" },
+      { url: "/favicon.png", type: "image/png", sizes: "512x512" },
+    ],
     apple: "/favicon.png",
   },
 };

@@ -46,3 +46,9 @@ next-env.d.ts
 
 .vercel
 .env*
+
+.agents/
+.claude/
+.windsurf/
+.cursor/
+skills-lock.json

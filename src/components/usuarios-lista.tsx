@@ -15,6 +15,7 @@ type Usuario = {
   reclamacoes: number;
   tratamentos: number;
   historicos: number;
+  etapas: number;
 };
 
 export function UsuariosLista({

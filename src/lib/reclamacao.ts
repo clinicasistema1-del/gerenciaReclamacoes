@@ -1,5 +1,5 @@
-import { addHours } from "date-fns";
-import type { Cargo, EsteiraEtapa } from "@prisma/client";
+import { addDays } from "date-fns";
+import type { EsteiraEtapa } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { sendSlaEmail } from "@/lib/email";
 
@@ -25,7 +25,7 @@ export async function primeiraEtapa() {
 
 export function calcularPrazo(etapa: EsteiraEtapa | null) {
   if (!etapa) return null;
-  return addHours(new Date(), etapa.prazoHoras);
+  return addDays(new Date(), etapa.prazoDias);
 }
 
 export async function avancarEtapa(reclamacaoId: string, usuarioId: string) {
@@ -114,53 +114,40 @@ export async function processarEscalonamentos() {
     const etapaAlvo = await prisma.esteiraEtapa.findFirst({
       where: { active: true, ordem: { gte: etapaOrdem }, emailAviso: true },
       orderBy: { ordem: "asc" },
+      include: { usuario: true },
     });
 
-    if (!etapaAlvo) continue;
+    if (!etapaAlvo?.usuario?.email) continue;
 
-    const destinatarios = await prisma.user.findMany({
+    const dest = etapaAlvo.usuario;
+    const jaEnviado = await prisma.escalonamentoLog.findFirst({
       where: {
-        active: true,
-        OR: [
-          {
-            cargo: etapaAlvo.cargoAlvo as Cargo,
-            OR: [{ clinicId: item.clinicId }, { clinicId: null }],
-          },
-          { role: "ADMIN" },
-        ],
+        reclamacaoId: item.id,
+        etapaOrdem: etapaAlvo.ordem,
+        emailDestino: dest.email,
       },
     });
+    if (jaEnviado) continue;
 
-    for (const dest of destinatarios) {
-      const jaEnviado = await prisma.escalonamentoLog.findFirst({
-        where: {
-          reclamacaoId: item.id,
-          etapaOrdem: etapaAlvo.ordem,
-          emailDestino: dest.email,
-        },
-      });
-      if (jaEnviado) continue;
+    const result = await sendSlaEmail({
+      to: dest.email,
+      protocolo: item.protocolo,
+      pacienteNome: item.pacienteNome,
+      clinica: item.clinic.name,
+      etapa: item.etapa?.nome ?? etapaAlvo.nome,
+      prazoEm: item.prazoEm ?? agora,
+    });
 
-      const result = await sendSlaEmail({
-        to: dest.email,
-        protocolo: item.protocolo,
-        pacienteNome: item.pacienteNome,
-        clinica: item.clinic.name,
-        etapa: item.etapa?.nome ?? etapaAlvo.nome,
-        prazoEm: item.prazoEm ?? agora,
-      });
-
-      await prisma.escalonamentoLog.create({
-        data: {
-          reclamacaoId: item.id,
-          etapaOrdem: etapaAlvo.ordem,
-          emailDestino: dest.email,
-          sucesso: result.ok,
-          erro: result.error,
-        },
-      });
-      enviados += 1;
-    }
+    await prisma.escalonamentoLog.create({
+      data: {
+        reclamacaoId: item.id,
+        etapaOrdem: etapaAlvo.ordem,
+        emailDestino: dest.email,
+        sucesso: result.ok,
+        erro: result.error,
+      },
+    });
+    enviados += 1;
   }
 
   return { processadas: atrasadas.length, enviados };

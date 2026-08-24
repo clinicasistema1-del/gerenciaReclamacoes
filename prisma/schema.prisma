@@ -76,6 +76,7 @@ model User {
   reclamacoesCriadas     Reclamacao[] @relation("Criador")
   historicos             HistoricoReclamacao[]
   tratamentos            Tratamento[] @relation("ResponsavelTratamento")
+  etapasEsteira          EsteiraEtapa[]
 
   @@map("user")
 }
@@ -142,8 +143,9 @@ model EsteiraEtapa {
   id           String   @id @default(cuid())
   nome         String
   ordem        Int
-  prazoHoras   Int
-  cargoAlvo    Cargo
+  prazoDias    Int
+  usuarioId    String
+  usuario      User     @relation(fields: [usuarioId], references: [id])
   emailAviso   Boolean  @default(true)
   active       Boolean  @default(true)
   createdAt    DateTime @default(now())

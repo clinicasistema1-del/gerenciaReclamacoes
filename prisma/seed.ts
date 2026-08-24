@@ -27,46 +27,6 @@ async function main() {
     }),
   ]);
 
-  const etapas = [
-    { id: "etapa-1", nome: "Abertura SAC", ordem: 1, prazoHoras: 24, cargoAlvo: Cargo.SAC },
-    {
-      id: "etapa-2",
-      nome: "Coordenação",
-      ordem: 2,
-      prazoHoras: 48,
-      cargoAlvo: Cargo.COORDENADOR,
-    },
-    {
-      id: "etapa-3",
-      nome: "Gerência da unidade",
-      ordem: 3,
-      prazoHoras: 48,
-      cargoAlvo: Cargo.GERENCIA,
-    },
-    {
-      id: "etapa-4",
-      nome: "Diretoria",
-      ordem: 4,
-      prazoHoras: 72,
-      cargoAlvo: Cargo.DIRETORIA,
-    },
-    {
-      id: "etapa-5",
-      nome: "Parecer administração",
-      ordem: 5,
-      prazoHoras: 48,
-      cargoAlvo: Cargo.DIRETORIA,
-    },
-  ];
-
-  for (const etapa of etapas) {
-    await prisma.esteiraEtapa.upsert({
-      where: { id: etapa.id },
-      update: etapa,
-      create: etapa,
-    });
-  }
-
   async function ensureUser(data: {
     id: string;
     name: string;
@@ -128,7 +88,7 @@ async function main() {
     password: "admin",
   });
 
-  await ensureUser({
+  const sac = await ensureUser({
     id: "user-sac",
     name: "Ana SAC",
     email: "sac@gruposorria.com.br",
@@ -137,7 +97,7 @@ async function main() {
     password: "sac123",
   });
 
-  await ensureUser({
+  const coord = await ensureUser({
     id: "user-coord",
     name: "Carlos Coordenação",
     email: "coordenacao@gruposorria.com.br",
@@ -146,6 +106,52 @@ async function main() {
     clinicId: clinicas[0].id,
     password: "coord123",
   });
+
+  const etapas = [
+    {
+      id: "etapa-1",
+      nome: "Abertura SAC",
+      ordem: 1,
+      prazoDias: 1,
+      usuarioId: sac.id,
+    },
+    {
+      id: "etapa-2",
+      nome: "Coordenação",
+      ordem: 2,
+      prazoDias: 2,
+      usuarioId: coord.id,
+    },
+    {
+      id: "etapa-3",
+      nome: "Gerência da unidade",
+      ordem: 3,
+      prazoDias: 2,
+      usuarioId: admin.id,
+    },
+    {
+      id: "etapa-4",
+      nome: "Diretoria",
+      ordem: 4,
+      prazoDias: 3,
+      usuarioId: admin.id,
+    },
+    {
+      id: "etapa-5",
+      nome: "Parecer administração",
+      ordem: 5,
+      prazoDias: 2,
+      usuarioId: admin.id,
+    },
+  ];
+
+  for (const etapa of etapas) {
+    await prisma.esteiraEtapa.upsert({
+      where: { id: etapa.id },
+      update: etapa,
+      create: etapa,
+    });
+  }
 
   const existing = await prisma.reclamacao.findUnique({
     where: { protocolo: "GRC-2026-000001" },

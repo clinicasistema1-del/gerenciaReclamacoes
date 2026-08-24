@@ -2,78 +2,62 @@
 
 import { useState } from "react";
 import { Trash2 } from "lucide-react";
-import { updateUser, deleteUser } from "@/app/actions";
+import { updateEsteira, deleteEsteira } from "@/app/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { FeedbackModal } from "@/components/feedback-modal";
-import { cargoLabels, roleLabels } from "@/lib/labels";
 
 const selectClass =
   "flex h-10 w-full rounded-md border border-[var(--border)] bg-white px-3 text-sm";
 
-type Usuario = {
+type Etapa = {
   id: string;
-  name: string;
-  email: string;
-  role: string;
-  cargo: string | null;
-  clinicId: string | null;
+  nome: string;
+  ordem: number;
+  prazoDias: number;
+  usuarioId: string;
+  emailAviso: boolean;
   active: boolean;
   reclamacoes: number;
-  tratamentos: number;
-  historicos: number;
-  etapas: number;
 };
 
-export function UsuarioCard({
-  usuario,
-  clinicas,
-  currentUserId,
-  onExcluido,
+export function EsteiraCard({
+  etapa,
+  usuarios,
+  onExcluida,
 }: {
-  usuario: Usuario;
-  clinicas: { id: string; name: string }[];
-  currentUserId: string;
-  onExcluido: () => void;
+  etapa: Etapa;
+  usuarios: { id: string; name: string; email: string }[];
+  onExcluida: () => void;
 }) {
   const [aberto, setAberto] = useState(false);
   const [erro, setErro] = useState("");
   const [enviando, setEnviando] = useState(false);
   const [sucesso, setSucesso] = useState("");
-  const ehLogado = usuario.id === currentUserId;
-  const podeExcluir =
-    !ehLogado &&
-    usuario.reclamacoes === 0 &&
-    usuario.tratamentos === 0 &&
-    usuario.historicos === 0 &&
-    usuario.etapas === 0;
+  const podeExcluir = etapa.reclamacoes === 0;
 
   async function salvar(formData: FormData) {
-    await updateUser(formData);
-    setSucesso("Usuário atualizado.");
+    await updateEsteira(formData);
+    setSucesso("Etapa atualizada.");
   }
 
   async function confirmar() {
     if (!podeExcluir) return;
     setEnviando(true);
     setErro("");
-    const result = await deleteUser(usuario.id);
+    const result = await deleteEsteira(etapa.id);
     setEnviando(false);
     if (!result.ok) {
-      if (result.motivo === "self") {
-        setErro("Não é possível excluir o usuário logado.");
-        return;
-      }
       setErro(
-        `Não é possível excluir. Há ${result.reclamacoes} reclamação(ões), ${result.tratamentos} tratamento(s), ${result.historicos} registro(s) de histórico e ${result.etapas} etapa(s) da esteira vinculados.`
+        `Não é possível excluir. Há ${result.reclamacoes} reclamação(ões) vinculadas.`
       );
       return;
     }
     setAberto(false);
-    onExcluido();
+    onExcluida();
   }
 
   return (
@@ -86,86 +70,80 @@ export function UsuarioCard({
             setAberto(true);
           }}
           className="absolute right-4 top-4 rounded-md p-2 text-[var(--muted)] hover:bg-red-50 hover:text-red-600"
-          aria-label="Excluir usuário"
+          aria-label="Excluir etapa"
         >
           <Trash2 className="h-4 w-4" />
         </button>
         <CardContent className="pt-5 pr-14">
           <form action={salvar} className="grid gap-3 md:grid-cols-6 items-end">
-            <input type="hidden" name="id" value={usuario.id} />
+            <input type="hidden" name="id" value={etapa.id} />
             <div className="space-y-2 md:col-span-2">
-              <div className="flex min-h-5 items-baseline justify-between gap-2">
-                <Label>Nome</Label>
-                <span className="truncate text-xs text-[var(--muted)]">
-                  {usuario.email}
-                </span>
-              </div>
-              <Input name="name" defaultValue={usuario.name} required />
+              <Label>Nome</Label>
+              <Input name="nome" defaultValue={etapa.nome} required />
             </div>
             <div className="space-y-2">
-              <Label>Perfil</Label>
+              <Label>Ordem</Label>
+              <Input
+                name="ordem"
+                type="number"
+                min={1}
+                defaultValue={etapa.ordem}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Prazo (dias)</Label>
+              <Input
+                name="prazoDias"
+                type="number"
+                min={1}
+                defaultValue={etapa.prazoDias}
+                required
+              />
+            </div>
+            <div className="space-y-2 md:col-span-2">
+              <Label>Usuário do alerta</Label>
               <select
-                name="role"
-                defaultValue={usuario.role}
+                name="usuarioId"
+                defaultValue={etapa.usuarioId}
                 className={selectClass}
+                required
               >
-                {Object.entries(roleLabels).map(([k, v]) => (
-                  <option key={k} value={k}>
-                    {v}
+                {usuarios.map((u) => (
+                  <option key={u.id} value={u.id}>
+                    {u.name} — {u.email}
                   </option>
                 ))}
               </select>
             </div>
-            <div className="space-y-2">
-              <Label>Cargo</Label>
-              <select
-                name="cargo"
-                defaultValue={usuario.cargo || ""}
-                className={selectClass}
-              >
-                <option value="">Sem cargo</option>
-                {Object.entries(cargoLabels).map(([k, v]) => (
-                  <option key={k} value={k}>
-                    {v}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="space-y-2">
-              <Label>Clínica</Label>
-              <select
-                name="clinicId"
-                defaultValue={usuario.clinicId || ""}
-                className={selectClass}
-              >
-                <option value="">Rede / sem unidade</option>
-                {clinicas.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="flex h-10 items-center gap-3">
+            <label className="flex h-10 items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                name="emailAviso"
+                defaultChecked={etapa.emailAviso}
+              />
+              E-mail
+            </label>
+            <div className="flex h-10 items-center gap-3 md:col-span-2">
               <label className="flex items-center gap-2 text-sm">
                 <input
                   type="checkbox"
                   name="active"
-                  defaultChecked={usuario.active}
+                  defaultChecked={etapa.active}
                 />
-                Ativo
+                Ativa
               </label>
               <Button type="submit" variant="secondary" size="sm">
                 Salvar
               </Button>
               <Badge
                 className={
-                  usuario.active
+                  etapa.active
                     ? "bg-emerald-100 text-emerald-800"
                     : "bg-slate-100 text-slate-600"
                 }
               >
-                {usuario.active ? "Ativo" : "Inativo"}
+                {etapa.active ? "Ativa" : "Inativa"}
               </Badge>
             </div>
           </form>
@@ -175,22 +153,16 @@ export function UsuarioCard({
       {aberto && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
           <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
-            <h2 className="text-lg font-semibold">Excluir usuário</h2>
-            {ehLogado ? (
-              <p className="mt-2 text-sm text-red-700">
-                Não é possível excluir o usuário logado.
-              </p>
-            ) : podeExcluir ? (
+            <h2 className="text-lg font-semibold">Excluir etapa</h2>
+            {podeExcluir ? (
               <p className="mt-2 text-sm text-[var(--muted)]">
-                Confirma a exclusão de <strong>{usuario.name}</strong>? Esta ação
+                Confirma a exclusão de <strong>{etapa.nome}</strong>? Esta ação
                 não pode ser desfeita.
               </p>
             ) : (
               <p className="mt-2 text-sm text-red-700">
-                Não é possível excluir <strong>{usuario.name}</strong>. Há{" "}
-                {usuario.reclamacoes} reclamação(ões), {usuario.tratamentos}{" "}
-                tratamento(s), {usuario.historicos} registro(s) de histórico e{" "}
-                {usuario.etapas} etapa(s) da esteira vinculados.
+                Não é possível excluir <strong>{etapa.nome}</strong>. Há{" "}
+                {etapa.reclamacoes} reclamação(ões) vinculadas a esta etapa.
               </p>
             )}
             {erro && <p className="mt-2 text-sm text-red-700">{erro}</p>}

@@ -123,22 +123,26 @@ export async function deleteUser(id: string) {
       reclamacoes: 0,
       tratamentos: 0,
       historicos: 0,
+      etapas: 0,
     };
   }
-  const [responsavel, criadas, tratamentos, historicos] = await Promise.all([
-    prisma.reclamacao.count({ where: { responsavelId: id } }),
-    prisma.reclamacao.count({ where: { criadoPorId: id } }),
-    prisma.tratamento.count({ where: { responsavelId: id } }),
-    prisma.historicoReclamacao.count({ where: { usuarioId: id } }),
-  ]);
+  const [responsavel, criadas, tratamentos, historicos, etapas] =
+    await Promise.all([
+      prisma.reclamacao.count({ where: { responsavelId: id } }),
+      prisma.reclamacao.count({ where: { criadoPorId: id } }),
+      prisma.tratamento.count({ where: { responsavelId: id } }),
+      prisma.historicoReclamacao.count({ where: { usuarioId: id } }),
+      prisma.esteiraEtapa.count({ where: { usuarioId: id } }),
+    ]);
   const reclamacoes = responsavel + criadas;
-  if (reclamacoes > 0 || tratamentos > 0 || historicos > 0) {
+  if (reclamacoes > 0 || tratamentos > 0 || historicos > 0 || etapas > 0) {
     return {
       ok: false as const,
       motivo: "vinculos" as const,
       reclamacoes,
       tratamentos,
       historicos,
+      etapas,
     };
   }
   await prisma.user.delete({ where: { id } });
@@ -146,24 +150,49 @@ export async function deleteUser(id: string) {
   return { ok: true as const };
 }
 
-export async function saveEsteira(formData: FormData) {
+export async function createEsteira(formData: FormData) {
   await requireAdmin();
-  const id = String(formData.get("id") || "");
-  const data = {
-    nome: String(formData.get("nome")),
-    ordem: Number(formData.get("ordem")),
-    prazoHoras: Number(formData.get("prazoHoras")),
-    cargoAlvo: String(formData.get("cargoAlvo")) as Cargo,
-    emailAviso: formData.get("emailAviso") === "on",
-    active: formData.get("active") === "on",
-  };
-
-  if (id) {
-    await prisma.esteiraEtapa.update({ where: { id }, data });
-  } else {
-    await prisma.esteiraEtapa.create({ data });
-  }
+  await prisma.esteiraEtapa.create({
+    data: {
+      nome: String(formData.get("nome")),
+      ordem: Number(formData.get("ordem")),
+      prazoDias: Number(formData.get("prazoDias")),
+      usuarioId: String(formData.get("usuarioId")),
+      emailAviso: formData.get("emailAviso") === "on",
+      active: formData.get("active") === "on",
+    },
+  });
   revalidatePath("/admin/esteira");
+  return { ok: true as const };
+}
+
+export async function updateEsteira(formData: FormData) {
+  await requireAdmin();
+  const id = String(formData.get("id"));
+  await prisma.esteiraEtapa.update({
+    where: { id },
+    data: {
+      nome: String(formData.get("nome")),
+      ordem: Number(formData.get("ordem")),
+      prazoDias: Number(formData.get("prazoDias")),
+      usuarioId: String(formData.get("usuarioId")),
+      emailAviso: formData.get("emailAviso") === "on",
+      active: formData.get("active") === "on",
+    },
+  });
+  revalidatePath("/admin/esteira");
+  return { ok: true as const };
+}
+
+export async function deleteEsteira(id: string) {
+  await requireAdmin();
+  const reclamacoes = await prisma.reclamacao.count({ where: { etapaId: id } });
+  if (reclamacoes > 0) {
+    return { ok: false as const, reclamacoes };
+  }
+  await prisma.esteiraEtapa.delete({ where: { id } });
+  revalidatePath("/admin/esteira");
+  return { ok: true as const };
 }
 
 export async function createReclamacao(formData: FormData) {

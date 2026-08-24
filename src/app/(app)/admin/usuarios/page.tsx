@@ -16,6 +16,7 @@ export default async function UsuariosPage() {
             reclamacoesCriadas: true,
             tratamentos: true,
             historicos: true,
+            etapasEsteira: true,
           },
         },
       },
@@ -65,6 +66,7 @@ export default async function UsuariosPage() {
             u._count.reclamacoesResponsavel + u._count.reclamacoesCriadas,
           tratamentos: u._count.tratamentos,
           historicos: u._count.historicos,
+          etapas: u._count.etapasEsteira,
         }))}
       />
     </div>

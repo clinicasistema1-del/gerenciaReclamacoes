@@ -12,6 +12,7 @@ import {
 } from "@/lib/reclamacao";
 import type {
   CanalOrigem,
+  Cargo,
   MotivoReclamacao,
   Prioridade,
   Role,
@@ -67,6 +68,8 @@ export async function createUser(formData: FormData) {
   const email = String(formData.get("email")).toLowerCase();
   const name = String(formData.get("name"));
   const role = String(formData.get("role")) as Role;
+  const cargoRaw = String(formData.get("cargo") || "");
+  const cargo = cargoRaw ? (cargoRaw as Cargo) : null;
   const clinicId = String(formData.get("clinicId") || "") || null;
 
   const user = await prisma.user.create({
@@ -74,6 +77,7 @@ export async function createUser(formData: FormData) {
       name,
       email,
       role,
+      cargo,
       clinicId,
       emailVerified: true,
     },
@@ -95,11 +99,13 @@ export async function createUser(formData: FormData) {
 export async function updateUser(formData: FormData) {
   await requireAdmin();
   const id = String(formData.get("id"));
+  const cargoRaw = String(formData.get("cargo") || "");
   await prisma.user.update({
     where: { id },
     data: {
       name: String(formData.get("name")),
       role: String(formData.get("role")) as Role,
+      cargo: cargoRaw ? (cargoRaw as Cargo) : null,
       clinicId: String(formData.get("clinicId") || "") || null,
       active: formData.get("active") === "on",
     },
@@ -147,7 +153,7 @@ export async function saveEsteira(formData: FormData) {
     nome: String(formData.get("nome")),
     ordem: Number(formData.get("ordem")),
     prazoHoras: Number(formData.get("prazoHoras")),
-    roleAlvo: String(formData.get("roleAlvo")) as Role,
+    cargoAlvo: String(formData.get("cargoAlvo")) as Cargo,
     emailAviso: formData.get("emailAviso") === "on",
     active: formData.get("active") === "on",
   };

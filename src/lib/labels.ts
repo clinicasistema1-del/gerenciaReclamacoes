@@ -1,10 +1,14 @@
 export const roleLabels: Record<string, string> = {
   ADMIN: "Administrador",
-  SAC: "SAC / CRC",
-  COORDENACAO: "Coordenação",
-  GERENCIA: "Gerência",
+  PADRAO: "Padrão",
+};
+
+export const cargoLabels: Record<string, string> = {
+  SAC: "SAC",
   DENTISTA: "Dentista",
-  AUDITORIA: "Auditoria",
+  SECRETARIA: "Secretária",
+  COORDENADOR: "Coordenador",
+  GERENCIA: "Gerência",
   DIRETORIA: "Diretoria",
 };
 

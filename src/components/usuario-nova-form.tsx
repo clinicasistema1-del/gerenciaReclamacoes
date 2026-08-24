@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { FeedbackModal } from "@/components/feedback-modal";
-import { roleLabels } from "@/lib/labels";
+import { cargoLabels, roleLabels } from "@/lib/labels";
 
 const selectClass =
   "flex h-10 w-full rounded-md border border-[var(--border)] bg-white px-3 text-sm";
@@ -46,9 +46,20 @@ export function UsuarioNovaForm({
             id="role"
             name="role"
             className={selectClass}
-            defaultValue="SAC"
+            defaultValue="PADRAO"
           >
             {Object.entries(roleLabels).map(([k, v]) => (
+              <option key={k} value={k}>
+                {v}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="cargo">Cargo</Label>
+          <select id="cargo" name="cargo" className={selectClass} defaultValue="SAC">
+            <option value="">Sem cargo</option>
+            {Object.entries(cargoLabels).map(([k, v]) => (
               <option key={k} value={k}>
                 {v}
               </option>
@@ -66,7 +77,7 @@ export function UsuarioNovaForm({
             ))}
           </select>
         </div>
-        <div className="flex items-end">
+        <div className="flex items-end md:col-span-3">
           <Button type="submit">Cadastrar</Button>
         </div>
       </form>

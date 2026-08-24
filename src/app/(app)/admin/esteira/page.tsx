@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { roleLabels } from "@/lib/labels";
+import { cargoLabels } from "@/lib/labels";
 
 export default async function EsteiraPage() {
   await requireAdmin();
@@ -41,13 +41,13 @@ export default async function EsteiraPage() {
               <Input id="prazoHoras" name="prazoHoras" type="number" required />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="roleAlvo">Perfil avisado</Label>
+              <Label htmlFor="cargoAlvo">Cargo avisado</Label>
               <select
-                id="roleAlvo"
-                name="roleAlvo"
+                id="cargoAlvo"
+                name="cargoAlvo"
                 className="flex h-10 w-full rounded-md border border-[var(--border)] px-3 text-sm"
               >
-                {Object.entries(roleLabels).map(([k, v]) => (
+                {Object.entries(cargoLabels).map(([k, v]) => (
                   <option key={k} value={k}>
                     {v}
                   </option>
@@ -93,13 +93,13 @@ export default async function EsteiraPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Perfil</Label>
+                  <Label>Cargo</Label>
                   <select
-                    name="roleAlvo"
-                    defaultValue={e.roleAlvo}
+                    name="cargoAlvo"
+                    defaultValue={e.cargoAlvo}
                     className="flex h-10 w-full rounded-md border border-[var(--border)] px-3 text-sm"
                   >
-                    {Object.entries(roleLabels).map(([k, v]) => (
+                    {Object.entries(cargoLabels).map(([k, v]) => (
                       <option key={k} value={k}>
                         {v}
                       </option>

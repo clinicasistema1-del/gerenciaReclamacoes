@@ -58,6 +58,7 @@ export default async function UsuariosPage() {
           name: u.name,
           email: u.email,
           role: u.role,
+          cargo: u.cargo,
           clinicId: u.clinicId,
           active: u.active,
           reclamacoes:

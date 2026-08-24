@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { authClient } from "@/lib/auth-client";
+import { roleLabels } from "@/lib/labels";
 import { useRouter } from "next/navigation";
 
 const links = [
@@ -119,7 +120,7 @@ export function AppSidebar({
       </nav>
       <div className="border-t border-white/10 p-4">
         <p className="truncate text-sm font-medium">{userName}</p>
-        <p className="text-xs text-white/50">{role}</p>
+        <p className="text-xs text-white/50">{roleLabels[role] ?? role}</p>
         <button
           onClick={logout}
           className="mt-3 flex items-center gap-2 text-sm text-white/70 hover:text-white"

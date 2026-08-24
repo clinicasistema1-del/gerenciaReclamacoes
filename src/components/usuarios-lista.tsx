@@ -9,6 +9,7 @@ type Usuario = {
   name: string;
   email: string;
   role: string;
+  cargo: string | null;
   clinicId: string | null;
   active: boolean;
   reclamacoes: number;

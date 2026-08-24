@@ -1,5 +1,5 @@
 import { hashPassword } from "better-auth/crypto";
-import { PrismaClient, Role } from "@prisma/client";
+import { Cargo, PrismaClient, Role } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
@@ -28,34 +28,34 @@ async function main() {
   ]);
 
   const etapas = [
-    { id: "etapa-1", nome: "Abertura SAC", ordem: 1, prazoHoras: 24, roleAlvo: Role.SAC },
+    { id: "etapa-1", nome: "Abertura SAC", ordem: 1, prazoHoras: 24, cargoAlvo: Cargo.SAC },
     {
       id: "etapa-2",
       nome: "Coordenação",
       ordem: 2,
       prazoHoras: 48,
-      roleAlvo: Role.COORDENACAO,
+      cargoAlvo: Cargo.COORDENADOR,
     },
     {
       id: "etapa-3",
       nome: "Gerência da unidade",
       ordem: 3,
       prazoHoras: 48,
-      roleAlvo: Role.GERENCIA,
+      cargoAlvo: Cargo.GERENCIA,
     },
     {
       id: "etapa-4",
-      nome: "Auditoria",
+      nome: "Diretoria",
       ordem: 4,
       prazoHoras: 72,
-      roleAlvo: Role.AUDITORIA,
+      cargoAlvo: Cargo.DIRETORIA,
     },
     {
       id: "etapa-5",
       nome: "Parecer administração",
       ordem: 5,
       prazoHoras: 48,
-      roleAlvo: Role.ADMIN,
+      cargoAlvo: Cargo.DIRETORIA,
     },
   ];
 
@@ -72,6 +72,7 @@ async function main() {
     name: string;
     email: string;
     role: Role;
+    cargo?: Cargo;
     clinicId?: string;
     password: string;
   }) {
@@ -80,6 +81,7 @@ async function main() {
       update: {
         name: data.name,
         role: data.role,
+        cargo: data.cargo ?? null,
         clinicId: data.clinicId,
         active: true,
       },
@@ -88,6 +90,7 @@ async function main() {
         name: data.name,
         email: data.email,
         role: data.role,
+        cargo: data.cargo,
         clinicId: data.clinicId,
         emailVerified: true,
       },
@@ -129,7 +132,8 @@ async function main() {
     id: "user-sac",
     name: "Ana SAC",
     email: "sac@gruposorria.com.br",
-    role: Role.SAC,
+    role: Role.PADRAO,
+    cargo: Cargo.SAC,
     password: "sac123",
   });
 
@@ -137,7 +141,8 @@ async function main() {
     id: "user-coord",
     name: "Carlos Coordenação",
     email: "coordenacao@gruposorria.com.br",
-    role: Role.COORDENACAO,
+    role: Role.PADRAO,
+    cargo: Cargo.COORDENADOR,
     clinicId: clinicas[0].id,
     password: "coord123",
   });

@@ -16,7 +16,12 @@ export const auth = betterAuth({
       role: {
         type: "string",
         required: true,
-        defaultValue: "SAC",
+        defaultValue: "PADRAO",
+        input: false,
+      },
+      cargo: {
+        type: "string",
+        required: false,
         input: false,
       },
       clinicId: {

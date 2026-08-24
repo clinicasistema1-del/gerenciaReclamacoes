@@ -9,11 +9,15 @@ datasource db {
 
 enum Role {
   ADMIN
+  PADRAO
+}
+
+enum Cargo {
   SAC
-  COORDENACAO
-  GERENCIA
   DENTISTA
-  AUDITORIA
+  SECRETARIA
+  COORDENADOR
+  GERENCIA
   DIRETORIA
 }
 
@@ -61,7 +65,8 @@ model User {
   image         String?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
-  role          Role      @default(SAC)
+  role          Role      @default(PADRAO)
+  cargo         Cargo?
   clinicId      String?
   clinic        Clinic?   @relation(fields: [clinicId], references: [id])
   active        Boolean   @default(true)
@@ -138,7 +143,7 @@ model EsteiraEtapa {
   nome         String
   ordem        Int
   prazoHoras   Int
-  roleAlvo     Role
+  cargoAlvo    Cargo
   emailAviso   Boolean  @default(true)
   active       Boolean  @default(true)
   createdAt    DateTime @default(now())

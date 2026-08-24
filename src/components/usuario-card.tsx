@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { FeedbackModal } from "@/components/feedback-modal";
-import { roleLabels } from "@/lib/labels";
+import { cargoLabels, roleLabels } from "@/lib/labels";
 
 const selectClass =
   "flex h-10 w-full rounded-md border border-[var(--border)] bg-white px-3 text-sm";
@@ -19,6 +19,7 @@ type Usuario = {
   name: string;
   email: string;
   role: string;
+  cargo: string | null;
   clinicId: string | null;
   active: boolean;
   reclamacoes: number;
@@ -88,12 +89,16 @@ export function UsuarioCard({
           <Trash2 className="h-4 w-4" />
         </button>
         <CardContent className="pt-5 pr-14">
-          <form action={salvar} className="grid gap-3 md:grid-cols-5 items-end">
+          <form action={salvar} className="grid gap-3 md:grid-cols-6 items-end">
             <input type="hidden" name="id" value={usuario.id} />
             <div className="space-y-2 md:col-span-2">
-              <Label>Nome</Label>
+              <div className="flex min-h-5 items-baseline justify-between gap-2">
+                <Label>Nome</Label>
+                <span className="truncate text-xs text-[var(--muted)]">
+                  {usuario.email}
+                </span>
+              </div>
               <Input name="name" defaultValue={usuario.name} required />
-              <p className="text-xs text-[var(--muted)]">{usuario.email}</p>
             </div>
             <div className="space-y-2">
               <Label>Perfil</Label>
@@ -103,6 +108,21 @@ export function UsuarioCard({
                 className={selectClass}
               >
                 {Object.entries(roleLabels).map(([k, v]) => (
+                  <option key={k} value={k}>
+                    {v}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="space-y-2">
+              <Label>Cargo</Label>
+              <select
+                name="cargo"
+                defaultValue={usuario.cargo || ""}
+                className={selectClass}
+              >
+                <option value="">Sem cargo</option>
+                {Object.entries(cargoLabels).map(([k, v]) => (
                   <option key={k} value={k}>
                     {v}
                   </option>
@@ -124,7 +144,7 @@ export function UsuarioCard({
                 ))}
               </select>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex h-10 items-center gap-3">
               <label className="flex items-center gap-2 text-sm">
                 <input
                   type="checkbox"

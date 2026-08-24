@@ -1,5 +1,5 @@
 import { addHours } from "date-fns";
-import type { EsteiraEtapa, Role } from "@prisma/client";
+import type { Cargo, EsteiraEtapa } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { sendSlaEmail } from "@/lib/email";
 
@@ -121,8 +121,13 @@ export async function processarEscalonamentos() {
     const destinatarios = await prisma.user.findMany({
       where: {
         active: true,
-        role: etapaAlvo.roleAlvo as Role,
-        OR: [{ clinicId: item.clinicId }, { role: "ADMIN" }],
+        OR: [
+          {
+            cargo: etapaAlvo.cargoAlvo as Cargo,
+            OR: [{ clinicId: item.clinicId }, { clinicId: null }],
+          },
+          { role: "ADMIN" },
+        ],
       },
     });
 

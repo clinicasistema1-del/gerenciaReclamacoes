@@ -44,6 +44,20 @@ export async function updateClinic(formData: FormData) {
   revalidatePath("/admin/clinicas");
 }
 
+export async function deleteClinic(id: string) {
+  await requireAdmin();
+  const [users, reclamacoes] = await Promise.all([
+    prisma.user.count({ where: { clinicId: id } }),
+    prisma.reclamacao.count({ where: { clinicId: id } }),
+  ]);
+  if (users > 0 || reclamacoes > 0) {
+    return { ok: false as const, users, reclamacoes };
+  }
+  await prisma.clinic.delete({ where: { id } });
+  revalidatePath("/admin/clinicas");
+  return { ok: true as const };
+}
+
 export async function createUser(formData: FormData) {
   await requireAdmin();
   const password = String(formData.get("password"));

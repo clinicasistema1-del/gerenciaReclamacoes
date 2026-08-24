@@ -27,6 +27,7 @@ export async function createClinic(formData: FormData) {
     },
   });
   revalidatePath("/admin/clinicas");
+  return { ok: true as const };
 }
 
 export async function updateClinic(formData: FormData) {
@@ -42,6 +43,7 @@ export async function updateClinic(formData: FormData) {
     },
   });
   revalidatePath("/admin/clinicas");
+  return { ok: true as const };
 }
 
 export async function deleteClinic(id: string) {
@@ -87,6 +89,7 @@ export async function createUser(formData: FormData) {
   });
 
   revalidatePath("/admin/usuarios");
+  return { ok: true as const };
 }
 
 export async function updateUser(formData: FormData) {
@@ -102,6 +105,39 @@ export async function updateUser(formData: FormData) {
     },
   });
   revalidatePath("/admin/usuarios");
+  return { ok: true as const };
+}
+
+export async function deleteUser(id: string) {
+  const session = await requireAdmin();
+  if (session.user.id === id) {
+    return {
+      ok: false as const,
+      motivo: "self" as const,
+      reclamacoes: 0,
+      tratamentos: 0,
+      historicos: 0,
+    };
+  }
+  const [responsavel, criadas, tratamentos, historicos] = await Promise.all([
+    prisma.reclamacao.count({ where: { responsavelId: id } }),
+    prisma.reclamacao.count({ where: { criadoPorId: id } }),
+    prisma.tratamento.count({ where: { responsavelId: id } }),
+    prisma.historicoReclamacao.count({ where: { usuarioId: id } }),
+  ]);
+  const reclamacoes = responsavel + criadas;
+  if (reclamacoes > 0 || tratamentos > 0 || historicos > 0) {
+    return {
+      ok: false as const,
+      motivo: "vinculos" as const,
+      reclamacoes,
+      tratamentos,
+      historicos,
+    };
+  }
+  await prisma.user.delete({ where: { id } });
+  revalidatePath("/admin/usuarios");
+  return { ok: true as const };
 }
 
 export async function saveEsteira(formData: FormData) {

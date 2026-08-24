@@ -85,7 +85,7 @@ export function SearchableSelect({
           setAberto((v) => !v);
           setBusca("");
         }}
-        className="flex h-10 w-full items-center justify-between rounded-md border border-[var(--border)] bg-white px-3 text-left text-sm text-[var(--ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)] disabled:cursor-not-allowed disabled:opacity-50"
+        className="flex h-10 w-full cursor-pointer items-center justify-between rounded-md border border-[var(--border)] bg-white px-3 text-left text-sm text-[var(--ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)] disabled:cursor-not-allowed disabled:opacity-50"
       >
         <span className={selecionado ? "" : "text-[var(--muted)]"}>
           {selecionado ? selecionado.label : placeholder}

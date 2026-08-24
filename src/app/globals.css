@@ -27,3 +27,23 @@ body {
   font-family: var(--font-body), sans-serif;
 }
 
+html :is(
+  a,
+  button,
+  label,
+  select,
+  summary,
+  [role="button"],
+  input[type="button"],
+  input[type="submit"],
+  input[type="checkbox"],
+  input[type="radio"],
+  input[type="file"]
+) {
+  cursor: pointer;
+}
+
+html :is(:disabled, [aria-disabled="true"]) {
+  cursor: not-allowed;
+}
+

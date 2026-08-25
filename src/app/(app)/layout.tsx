@@ -11,8 +11,8 @@ export default async function AppLayout({
   return (
     <div className="flex min-h-screen bg-[var(--surface)]">
       <AppSidebar userName={session.user.name} role={session.user.role} />
-      <main className="flex-1 overflow-y-auto">
-        <div className="mx-auto max-w-7xl p-6 md:p-8">{children}</div>
+      <main className="min-w-0 flex-1 overflow-y-auto">
+        <div className="mx-auto w-full max-w-[100rem] p-6 md:p-8">{children}</div>
       </main>
     </div>
   );

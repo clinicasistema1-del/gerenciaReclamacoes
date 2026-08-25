@@ -17,7 +17,7 @@ export async function sendSlaEmail(params: {
   const resend = getResend();
   const from =
     process.env.RESEND_FROM_EMAIL?.trim() ||
-    "GRC Grupo Sorria <onboarding@resend.dev>";
+    "GRC Grupo Sorria <noreply@sorriagrc.com.br>";
   const appUrl =
     process.env.NEXT_PUBLIC_APP_URL?.trim() ||
     process.env.BETTER_AUTH_URL?.trim() ||

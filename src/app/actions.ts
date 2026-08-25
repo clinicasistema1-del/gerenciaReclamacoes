@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { hashPassword } from "better-auth/crypto";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin, requireSession } from "@/lib/session";
@@ -231,6 +232,67 @@ export async function createReclamacao(formData: FormData) {
   return reclamacao.id;
 }
 
+export async function adicionarEvolucao(formData: FormData) {
+  const session = await requireSession();
+  const id = String(formData.get("id"));
+  const evolucao = String(formData.get("evolucao") || "").trim();
+  if (!evolucao) {
+    return;
+  }
+
+  await prisma.historicoReclamacao.create({
+    data: {
+      reclamacaoId: id,
+      usuarioId: session.user.id,
+      acao: "EVOLUCAO",
+      detalhe: evolucao,
+    },
+  });
+
+  revalidatePath(`/reclamacoes/${id}`);
+  redirect(`/reclamacoes/${id}`);
+}
+
+export async function encerrarReclamacao(formData: FormData) {
+  const session = await requireSession();
+  const id = String(formData.get("id"));
+  const parecerFinal = String(formData.get("parecerFinal") || "").trim();
+
+  await prisma.$transaction(async (tx) => {
+    await tx.reclamacao.update({
+      where: { id },
+      data: {
+        status: "ENCERRADA",
+        encerradaEm: new Date(),
+        concluidaEm: new Date(),
+        parecerFinal,
+        historicos: {
+          create: {
+            usuarioId: session.user.id,
+            acao: "ENCERRAMENTO",
+            detalhe: "Reclamação encerrada com parecer final e NPS gerado",
+          },
+        },
+      },
+    });
+
+    const npsExistente = await tx.npsResposta.findUnique({
+      where: { reclamacaoId: id },
+    });
+    if (!npsExistente) {
+      await tx.npsResposta.create({
+        data: { reclamacaoId: id },
+      });
+    }
+  });
+
+  revalidatePath(`/reclamacoes/${id}`);
+  revalidatePath("/reclamacoes");
+  revalidatePath("/agenda");
+  revalidatePath("/nps");
+  redirect(`/reclamacoes/${id}`);
+}
+
 export async function updateReclamacaoStatus(formData: FormData) {
   const session = await requireSession();
   const id = String(formData.get("id"));
@@ -238,40 +300,6 @@ export async function updateReclamacaoStatus(formData: FormData) {
 
   if (acao === "avancar") {
     await avancarEtapa(id, session.user.id);
-  } else if (acao === "concluir") {
-    await prisma.reclamacao.update({
-      where: { id },
-      data: {
-        status: "CONCLUIDA",
-        concluidaEm: new Date(),
-        historicos: {
-          create: {
-            usuarioId: session.user.id,
-            acao: "CONCLUSAO",
-            detalhe: "Demanda concluída",
-          },
-        },
-        nps: {
-          create: {},
-        },
-      },
-    });
-  } else if (acao === "encerrar") {
-    await prisma.reclamacao.update({
-      where: { id },
-      data: {
-        status: "ENCERRADA",
-        encerradaEm: new Date(),
-        parecerFinal: String(formData.get("parecerFinal") || ""),
-        historicos: {
-          create: {
-            usuarioId: session.user.id,
-            acao: "ENCERRAMENTO",
-            detalhe: "Parecer final e encerramento",
-          },
-        },
-      },
-    });
   } else if (acao === "atribuir") {
     await prisma.reclamacao.update({
       where: { id },

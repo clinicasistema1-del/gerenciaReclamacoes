@@ -1,13 +1,13 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { requireSession } from "@/lib/session";
-import { updateReclamacaoStatus, createTratamento } from "@/app/actions";
+import { createTratamento } from "@/app/actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { EncerrarReclamacaoButton } from "@/components/encerrar-reclamacao-button";
+import { EvolucaoReclamacaoButton } from "@/components/evolucao-reclamacao-button";
 import {
   canalLabels,
   motivoLabels,
@@ -16,6 +16,17 @@ import {
   statusLabels,
 } from "@/lib/labels";
 import { formatDate } from "@/lib/utils";
+
+const historicoAcaoLabels: Record<string, string> = {
+  ABERTURA: "Abertura",
+  EVOLUCAO: "Evolução",
+  ENCERRAMENTO: "Encerramento",
+  CONCLUSAO: "Conclusão",
+  ATRIBUICAO: "Atribuição",
+  AVANCO_ETAPA: "Avanço de etapa",
+  ETAPA_FINAL: "Etapa final",
+  MARCADA_ATRASADA: "Marcada como atrasada",
+};
 
 export default async function ReclamacaoDetalhePage({
   params,
@@ -31,7 +42,9 @@ export default async function ReclamacaoDetalhePage({
       clinic: true,
       responsavel: true,
       criadoPor: true,
-      etapa: true,
+      etapa: {
+        include: { usuario: true },
+      },
       historicos: {
         include: { usuario: true },
         orderBy: { createdAt: "desc" },
@@ -42,11 +55,6 @@ export default async function ReclamacaoDetalhePage({
   });
 
   if (!item) notFound();
-
-  const usuarios = await prisma.user.findMany({
-    where: { active: true },
-    orderBy: { name: "asc" },
-  });
 
   return (
     <div className="space-y-6">
@@ -104,8 +112,28 @@ export default async function ReclamacaoDetalhePage({
               <p className="font-medium">{item.etapa?.nome || "—"}</p>
             </div>
             <div>
+              <p className="text-[var(--muted)]">Responsável da etapa</p>
+              <p className="font-medium">
+                {item.etapa?.usuario?.name || "—"}
+              </p>
+              {item.etapa?.usuario?.email && (
+                <p className="text-xs text-[var(--muted)]">
+                  {item.etapa.usuario.email}
+                </p>
+              )}
+            </div>
+            <div>
               <p className="text-[var(--muted)]">Prazo</p>
               <p className="font-medium">{formatDate(item.prazoEm)}</p>
+            </div>
+            <div>
+              <p className="text-[var(--muted)]">
+                Responsável pelo atendimento
+              </p>
+              <p className="font-medium">{item.criadoPor.name}</p>
+              <p className="text-xs text-[var(--muted)]">
+                {item.criadoPor.email}
+              </p>
             </div>
             <div className="sm:col-span-2">
               <p className="text-[var(--muted)]">Descrição</p>
@@ -126,49 +154,15 @@ export default async function ReclamacaoDetalhePage({
               <CardTitle>Ações</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <form action={updateReclamacaoStatus}>
-                <input type="hidden" name="id" value={item.id} />
-                <input type="hidden" name="acao" value="avancar" />
-                <Button type="submit" className="w-full" variant="secondary">
-                  Avançar etapa
-                </Button>
-              </form>
-              <form action={updateReclamacaoStatus}>
-                <input type="hidden" name="id" value={item.id} />
-                <input type="hidden" name="acao" value="concluir" />
-                <Button type="submit" className="w-full">
-                  Concluir e gerar NPS
-                </Button>
-              </form>
-              <form action={updateReclamacaoStatus} className="space-y-2">
-                <input type="hidden" name="id" value={item.id} />
-                <input type="hidden" name="acao" value="encerrar" />
-                <Label htmlFor="parecerFinal">Parecer final</Label>
-                <Textarea id="parecerFinal" name="parecerFinal" />
-                <Button type="submit" className="w-full" variant="outline">
-                  Encerrar definitivamente
-                </Button>
-              </form>
-              <form action={updateReclamacaoStatus} className="space-y-2">
-                <input type="hidden" name="id" value={item.id} />
-                <input type="hidden" name="acao" value="atribuir" />
-                <Label htmlFor="responsavelId">Responsável</Label>
-                <select
-                  id="responsavelId"
-                  name="responsavelId"
-                  defaultValue={item.responsavelId || ""}
-                  className="flex h-10 w-full rounded-md border border-[var(--border)] px-3 text-sm"
-                >
-                  {usuarios.map((u) => (
-                    <option key={u.id} value={u.id}>
-                      {u.name}
-                    </option>
-                  ))}
-                </select>
-                <Button type="submit" className="w-full" variant="ghost">
-                  Atualizar responsável
-                </Button>
-              </form>
+              <EvolucaoReclamacaoButton reclamacaoId={item.id} />
+              <EncerrarReclamacaoButton
+                reclamacaoId={item.id}
+                jaEncerrada={
+                  Boolean(item.nps) ||
+                  item.status === "ENCERRADA" ||
+                  item.status === "CONCLUIDA"
+                }
+              />
             </CardContent>
           </Card>
 
@@ -203,7 +197,9 @@ export default async function ReclamacaoDetalhePage({
         <CardContent className="space-y-3">
           {item.historicos.map((h) => (
             <div key={h.id} className="border-b border-[var(--border)] pb-3 text-sm last:border-0">
-              <p className="font-medium">{h.acao}</p>
+              <p className="font-medium">
+                {historicoAcaoLabels[h.acao] || h.acao}
+              </p>
               <p className="text-[var(--muted)]">{h.detalhe}</p>
               <p className="text-xs text-[var(--muted)]">
                 {h.usuario?.name || "Sistema"} · {formatDate(h.createdAt)}

@@ -1,0 +1,67 @@
+"use client";
+
+import { useState } from "react";
+import { encerrarReclamacao } from "@/app/actions";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+
+export function EncerrarReclamacaoButton({
+  reclamacaoId,
+  jaEncerrada,
+}: {
+  reclamacaoId: string;
+  jaEncerrada: boolean;
+}) {
+  const [aberto, setAberto] = useState(false);
+
+  if (jaEncerrada) {
+    return (
+      <Button type="button" className="w-full" disabled>
+        Encerrar reclamação
+      </Button>
+    );
+  }
+
+  return (
+    <>
+      <Button type="button" className="w-full" onClick={() => setAberto(true)}>
+        Encerrar reclamação
+      </Button>
+
+      {aberto && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+          <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
+            <h2 className="text-lg font-semibold">Encerrar reclamação</h2>
+            <p className="mt-2 text-sm text-[var(--muted)]">
+              Informe o parecer final. Ao encerrar, a reclamação será finalizada
+              e o NPS será gerado.
+            </p>
+            <form action={encerrarReclamacao} className="mt-4 space-y-4">
+              <input type="hidden" name="id" value={reclamacaoId} />
+              <div className="space-y-2">
+                <Label htmlFor="parecerFinal">Parecer final</Label>
+                <Textarea
+                  id="parecerFinal"
+                  name="parecerFinal"
+                  required
+                  rows={4}
+                />
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setAberto(false)}
+                >
+                  Cancelar
+                </Button>
+                <Button type="submit">Encerrar</Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}

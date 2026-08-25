@@ -4,6 +4,7 @@ import { requireSession } from "@/lib/session";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ReclamacoesFiltros } from "@/components/reclamacoes-filtros";
 import {
   canalLabels,
   motivoLabels,
@@ -35,7 +36,7 @@ export default async function ReclamacoesPage({
     },
     include: {
       clinic: true,
-      responsavel: true,
+      criadoPor: true,
       etapa: true,
     },
     orderBy: { createdAt: "desc" },
@@ -53,7 +54,7 @@ export default async function ReclamacoesPage({
           </p>
         </div>
         <Button asChild>
-          <Link href="/reclamacoes/nova">Abrir protocolo</Link>
+          <Link href="/reclamacoes/nova">Abrir reclamação</Link>
         </Button>
       </div>
 
@@ -62,29 +63,7 @@ export default async function ReclamacoesPage({
           <CardTitle>Filtros</CardTitle>
         </CardHeader>
         <CardContent>
-          <form className="flex flex-wrap gap-3">
-            <input
-              name="q"
-              placeholder="Protocolo ou paciente"
-              defaultValue={params.q}
-              className="h-10 rounded-md border border-[var(--border)] px-3 text-sm"
-            />
-            <select
-              name="status"
-              defaultValue={params.status || ""}
-              className="h-10 rounded-md border border-[var(--border)] px-3 text-sm"
-            >
-              <option value="">Todos os status</option>
-              {Object.entries(statusLabels).map(([k, v]) => (
-                <option key={k} value={k}>
-                  {v}
-                </option>
-              ))}
-            </select>
-            <Button type="submit" variant="secondary">
-              Filtrar
-            </Button>
-          </form>
+          <ReclamacoesFiltros q={params.q} status={params.status} />
         </CardContent>
       </Card>
 
@@ -98,18 +77,27 @@ export default async function ReclamacoesPage({
               <th className="px-4 py-3 font-medium">Canal</th>
               <th className="px-4 py-3 font-medium">Status</th>
               <th className="px-4 py-3 font-medium">Prazo</th>
-              <th className="px-4 py-3 font-medium">Responsável</th>
+              <th className="px-4 py-3 font-medium">
+                Responsável pelo atendimento
+              </th>
             </tr>
           </thead>
           <tbody>
             {items.map((item) => (
-              <tr key={item.id} className="border-b border-[var(--border)] hover:bg-[var(--surface)]">
+              <tr
+                key={item.id}
+                className="border-b border-[var(--border)] hover:bg-[var(--surface)]"
+              >
                 <td className="px-4 py-3">
-                  <Link href={`/reclamacoes/${item.id}`} className="font-medium text-black hover:underline">
+                  <Link
+                    href={`/reclamacoes/${item.id}`}
+                    className="font-medium text-black hover:underline"
+                  >
                     {item.protocolo}
                   </Link>
                   <p className="text-xs text-[var(--muted)]">
-                    {prioridadeLabels[item.prioridade]} · {motivoLabels[item.motivo]}
+                    {prioridadeLabels[item.prioridade]} ·{" "}
+                    {motivoLabels[item.motivo]}
                   </p>
                 </td>
                 <td className="px-4 py-3">{item.pacienteNome}</td>
@@ -121,12 +109,15 @@ export default async function ReclamacoesPage({
                   </Badge>
                 </td>
                 <td className="px-4 py-3">{formatDate(item.prazoEm)}</td>
-                <td className="px-4 py-3">{item.responsavel?.name || "—"}</td>
+                <td className="px-4 py-3">{item.criadoPor.name}</td>
               </tr>
             ))}
             {items.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-4 py-10 text-center text-[var(--muted)]">
+                <td
+                  colSpan={7}
+                  className="px-4 py-10 text-center text-[var(--muted)]"
+                >
                   Nenhuma reclamação encontrada
                 </td>
               </tr>

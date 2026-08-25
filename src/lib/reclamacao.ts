@@ -88,6 +88,7 @@ export async function processarEscalonamentos() {
       clinic: true,
       etapa: true,
       responsavel: true,
+      criadoPor: true,
     },
   });
 
@@ -136,6 +137,9 @@ export async function processarEscalonamentos() {
       clinica: item.clinic.name,
       etapa: item.etapa?.nome ?? etapaAlvo.nome,
       prazoEm: item.prazoEm ?? agora,
+      descricao: item.descricao,
+      responsavelAtendimento:
+        item.responsavel?.name || item.criadoPor.name,
     });
 
     await prisma.escalonamentoLog.create({

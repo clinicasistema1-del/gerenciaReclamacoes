@@ -2,20 +2,20 @@ import { notFound } from "next/navigation";
 import QRCode from "qrcode";
 import { prisma } from "@/lib/prisma";
 import { requireSession } from "@/lib/session";
-import { createTratamento } from "@/app/actions";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { EncerrarReclamacaoButton } from "@/components/encerrar-reclamacao-button";
 import { EvolucaoReclamacaoButton } from "@/components/evolucao-reclamacao-button";
 import { NpsCompartilhar } from "@/components/nps-compartilhar";
+import { VincularTratamentoButton } from "@/components/vincular-tratamento-button";
 import {
   canalLabels,
   motivoLabels,
   prioridadeLabels,
   statusColors,
   statusLabels,
+  statusTratamentoColors,
+  statusTratamentoLabels,
 } from "@/lib/labels";
 import { formatDate } from "@/lib/utils";
 
@@ -38,25 +38,42 @@ export default async function ReclamacaoDetalhePage({
   await requireSession();
   const { id } = await params;
 
-  const item = await prisma.reclamacao.findUnique({
-    where: { id },
-    include: {
-      clinic: true,
-      responsavel: true,
-      criadoPor: true,
-      etapa: {
-        include: { usuario: true },
+  const [item, usuarios, clinicas] = await Promise.all([
+    prisma.reclamacao.findUnique({
+      where: { id },
+      include: {
+        clinic: true,
+        responsavel: true,
+        criadoPor: true,
+        etapa: {
+          include: { usuario: true },
+        },
+        historicos: {
+          include: { usuario: true },
+          orderBy: { createdAt: "desc" },
+        },
+        tratamentos: {
+          include: { clinic: true, responsavel: true },
+        },
+        nps: true,
       },
-      historicos: {
-        include: { usuario: true },
-        orderBy: { createdAt: "desc" },
-      },
-      tratamentos: true,
-      nps: true,
-    },
-  });
+    }),
+    prisma.user.findMany({
+      where: { active: true },
+      orderBy: { name: "asc" },
+      select: { id: true, name: true },
+    }),
+    prisma.clinic.findMany({
+      where: { active: true },
+      orderBy: { name: "asc" },
+      select: { id: true, name: true, city: true, state: true },
+    }),
+  ]);
 
   if (!item) notFound();
+
+  const tratamento = item.tratamentos[0] ?? null;
+  const tratamentoAberto = tratamento?.status === "EM_ANDAMENTO";
 
   const jaEncerrada =
     Boolean(item.nps) ||
@@ -70,6 +87,9 @@ export default async function ReclamacaoDetalhePage({
 
   const npsUrl = item.nps ? `${baseUrl}/nps/${item.nps.token}` : null;
   const npsQr = npsUrl ? await QRCode.toDataURL(npsUrl) : null;
+
+  const responsavelPadraoId =
+    item.responsavel?.id || item.criadoPor.id;
 
   return (
     <div className="space-y-6">
@@ -145,9 +165,11 @@ export default async function ReclamacaoDetalhePage({
               <p className="text-[var(--muted)]">
                 Responsável pelo atendimento
               </p>
-              <p className="font-medium">{item.criadoPor.name}</p>
+              <p className="font-medium">
+                {item.responsavel?.name || item.criadoPor.name}
+              </p>
               <p className="text-xs text-[var(--muted)]">
-                {item.criadoPor.email}
+                {item.responsavel?.email || item.criadoPor.email}
               </p>
             </div>
             <div className="sm:col-span-2">
@@ -175,6 +197,7 @@ export default async function ReclamacaoDetalhePage({
               <EncerrarReclamacaoButton
                 reclamacaoId={item.id}
                 jaEncerrada={jaEncerrada}
+                tratamentoAberto={Boolean(tratamentoAberto)}
               />
               {item.nps && npsUrl && npsQr && (
                 <NpsCompartilhar
@@ -188,23 +211,31 @@ export default async function ReclamacaoDetalhePage({
 
           <Card>
             <CardHeader>
-              <CardTitle>Tratamento vinculado</CardTitle>
+              <CardTitle>Tratamento</CardTitle>
+              {tratamento && (
+                <p className="text-sm text-[var(--muted)]">
+                  Status:{" "}
+                  <span
+                    className={`inline-flex rounded-md px-2 py-0.5 text-xs font-medium ${
+                      statusTratamentoColors[tratamento.status] || ""
+                    }`}
+                  >
+                    {statusTratamentoLabels[tratamento.status] ||
+                      tratamento.status}
+                  </span>
+                </p>
+              )}
             </CardHeader>
             <CardContent>
-              <form action={createTratamento} className="space-y-2">
-                <input type="hidden" name="reclamacaoId" value={item.id} />
-                <Input name="descricao" placeholder="Descrição do cuidado" required />
-                <Button type="submit" variant="secondary" className="w-full">
-                  Vincular tratamento
-                </Button>
-              </form>
-              <ul className="mt-4 space-y-2 text-sm">
-                {item.tratamentos.map((t) => (
-                  <li key={t.id} className="rounded-md bg-[var(--surface)] px-3 py-2">
-                    {t.descricao} · {t.status}
-                  </li>
-                ))}
-              </ul>
+              <VincularTratamentoButton
+                reclamacaoId={item.id}
+                tratamentoId={tratamento?.id}
+                defaultResponsavelId={responsavelPadraoId}
+                defaultClinicId={item.clinicId}
+                usuarios={usuarios}
+                clinicas={clinicas}
+                disabled={jaEncerrada}
+              />
             </CardContent>
           </Card>
         </div>
@@ -216,7 +247,10 @@ export default async function ReclamacaoDetalhePage({
         </CardHeader>
         <CardContent className="space-y-3">
           {item.historicos.map((h) => (
-            <div key={h.id} className="border-b border-[var(--border)] pb-3 text-sm last:border-0">
+            <div
+              key={h.id}
+              className="border-b border-[var(--border)] pb-3 text-sm last:border-0"
+            >
               <p className="font-medium">
                 {historicoAcaoLabels[h.acao] || h.acao}
               </p>

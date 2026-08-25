@@ -75,6 +75,7 @@ model User {
   reclamacoesResponsavel Reclamacao[] @relation("Responsavel")
   reclamacoesCriadas     Reclamacao[] @relation("Criador")
   historicos             HistoricoReclamacao[]
+  historicosTratamento   HistoricoTratamento[]
   tratamentos            Tratamento[] @relation("ResponsavelTratamento")
   etapasEsteira          EsteiraEtapa[]
 
@@ -126,15 +127,16 @@ model Verification {
 }
 
 model Clinic {
-  id        String   @id @default(cuid())
-  name      String
-  city      String
-  state     String
-  active    Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  users     User[]
+  id          String       @id @default(cuid())
+  name        String
+  city        String
+  state       String
+  active      Boolean      @default(true)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  users       User[]
   reclamacoes Reclamacao[]
+  tratamentos Tratamento[]
 
   @@map("clinic")
 }
@@ -208,17 +210,38 @@ model HistoricoReclamacao {
 }
 
 model Tratamento {
-  id             String     @id @default(cuid())
-  reclamacaoId   String
-  reclamacao     Reclamacao @relation(fields: [reclamacaoId], references: [id], onDelete: Cascade)
+  id             String                @id @default(cuid())
+  reclamacaoId   String                @unique
+  reclamacao     Reclamacao            @relation(fields: [reclamacaoId], references: [id], onDelete: Cascade)
+  clinicId       String
+  clinic         Clinic                @relation(fields: [clinicId], references: [id])
   descricao      String
-  status         String     @default("EM_ANDAMENTO")
+  status         String                @default("EM_ANDAMENTO")
   responsavelId  String?
-  responsavel    User?      @relation("ResponsavelTratamento", fields: [responsavelId], references: [id])
-  createdAt      DateTime   @default(now())
-  updatedAt      DateTime   @updatedAt
+  responsavel    User?                 @relation("ResponsavelTratamento", fields: [responsavelId], references: [id])
+  dataProxima    DateTime?
+  finalizadoEm   DateTime?
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
+  historicos     HistoricoTratamento[]
 
+  @@index([status])
+  @@index([clinicId])
+  @@index([dataProxima])
   @@map("tratamento")
+}
+
+model HistoricoTratamento {
+  id           String     @id @default(cuid())
+  tratamentoId String
+  tratamento   Tratamento @relation(fields: [tratamentoId], references: [id], onDelete: Cascade)
+  usuarioId    String?
+  usuario      User?      @relation(fields: [usuarioId], references: [id])
+  acao         String
+  detalhe      String?
+  createdAt    DateTime   @default(now())
+
+  @@map("historico_tratamento")
 }
 
 model NpsResposta {

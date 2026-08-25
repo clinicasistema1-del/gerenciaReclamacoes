@@ -56,3 +56,15 @@ export const statusColors: Record<string, string> = {
   CONCLUIDA: "bg-emerald-100 text-emerald-800",
   ENCERRADA: "bg-slate-100 text-slate-700",
 };
+
+export const statusTratamentoLabels: Record<string, string> = {
+  EM_ANDAMENTO: "Em andamento",
+  CONCLUIDO: "Concluído",
+  CANCELADO: "Cancelado",
+};
+
+export const statusTratamentoColors: Record<string, string> = {
+  EM_ANDAMENTO: "bg-amber-100 text-amber-800",
+  CONCLUIDO: "bg-emerald-100 text-emerald-800",
+  CANCELADO: "bg-slate-100 text-slate-700",
+};

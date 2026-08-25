@@ -1,15 +1,20 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { requireSession } from "@/lib/session";
-import { updateTratamentoStatus } from "@/app/actions";
-import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  statusTratamentoColors,
+  statusTratamentoLabels,
+} from "@/lib/labels";
+import { formatDateShort } from "@/lib/utils";
 
 export default async function TratamentosPage() {
   await requireSession();
   const tratamentos = await prisma.tratamento.findMany({
     include: {
-      reclamacao: { include: { clinic: true } },
+      clinic: true,
+      reclamacao: true,
       responsavel: true,
     },
     orderBy: { createdAt: "desc" },
@@ -31,10 +36,15 @@ export default async function TratamentosPage() {
           <Card key={t.id}>
             <CardHeader>
               <CardTitle className="flex flex-wrap items-center justify-between gap-2 text-base">
-                <span>{t.descricao}</span>
-                <span className="text-sm font-normal text-[var(--muted)]">
-                  {t.status}
-                </span>
+                <Link
+                  href={`/tratamentos/${t.id}`}
+                  className="hover:underline"
+                >
+                  {t.descricao}
+                </Link>
+                <Badge className={statusTratamentoColors[t.status]}>
+                  {statusTratamentoLabels[t.status] || t.status}
+                </Badge>
               </CardTitle>
             </CardHeader>
             <CardContent className="flex flex-wrap items-center justify-between gap-3 text-sm">
@@ -46,32 +56,26 @@ export default async function TratamentosPage() {
                   {t.reclamacao.protocolo}
                 </Link>
                 <p className="text-[var(--muted)]">
-                  {t.reclamacao.pacienteNome} · {t.reclamacao.clinic.name}
+                  {t.reclamacao.pacienteNome} · {t.clinic.name}
                 </p>
                 <p className="text-xs text-[var(--muted)]">
-                  Responsável: {t.responsavel?.name || "—"}
+                  Responsável: {t.responsavel?.name || "—"} · Próximo:{" "}
+                  {formatDateShort(t.dataProxima)}
                 </p>
               </div>
-              <form action={updateTratamentoStatus} className="flex gap-2">
-                <input type="hidden" name="id" value={t.id} />
-                <select
-                  name="status"
-                  defaultValue={t.status}
-                  className="h-10 rounded-md border border-[var(--border)] px-2 text-sm"
-                >
-                  <option value="EM_ANDAMENTO">Em andamento</option>
-                  <option value="CONCLUIDO">Concluído</option>
-                  <option value="CANCELADO">Cancelado</option>
-                </select>
-                <Button type="submit" size="sm" variant="secondary">
-                  Atualizar
-                </Button>
-              </form>
+              <Link
+                href={`/tratamentos/${t.id}`}
+                className="cursor-pointer text-sm font-medium text-black underline-offset-4 hover:underline"
+              >
+                Ver detalhes
+              </Link>
             </CardContent>
           </Card>
         ))}
         {tratamentos.length === 0 && (
-          <p className="text-[var(--muted)]">Nenhum tratamento vinculado ainda.</p>
+          <p className="text-[var(--muted)]">
+            Nenhum tratamento vinculado ainda.
+          </p>
         )}
       </div>
     </div>

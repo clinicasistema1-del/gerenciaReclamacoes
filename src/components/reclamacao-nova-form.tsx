@@ -117,12 +117,10 @@ export function ReclamacaoNovaForm({
           <SearchableSelect
             id="responsavelId"
             name="responsavelId"
+            required
             value={responsavelId}
-            placeholder="Eu mesmo"
-            options={[
-              { value: "", label: "Eu mesmo" },
-              ...usuarios.map((u) => ({ value: u.id, label: u.name })),
-            ]}
+            placeholder="Selecione ou pesquise o responsável"
+            options={usuarios.map((u) => ({ value: u.id, label: u.name }))}
             onChange={setResponsavelId}
           />
         </div>

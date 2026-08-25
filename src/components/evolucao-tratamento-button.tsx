@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { encerrarReclamacao } from "@/app/actions";
+import { adicionarEvolucaoTratamento } from "@/app/actions";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -10,83 +11,55 @@ import {
   variantFromMessage,
 } from "@/components/feedback-modal";
 
-export function EncerrarReclamacaoButton({
-  reclamacaoId,
-  jaEncerrada,
-  tratamentoAberto = false,
+export function EvolucaoTratamentoButton({
+  tratamentoId,
 }: {
-  reclamacaoId: string;
-  jaEncerrada: boolean;
-  tratamentoAberto?: boolean;
+  tratamentoId: string;
 }) {
   const [aberto, setAberto] = useState(false);
   const [erro, setErro] = useState("");
 
   async function enviar(formData: FormData) {
-    const result = await encerrarReclamacao(formData);
+    const result = await adicionarEvolucaoTratamento(formData);
     if (result && !result.ok) {
       setErro(result.error);
     }
   }
 
-  if (jaEncerrada) {
-    return (
-      <Button type="button" className="w-full" disabled>
-        Encerrar reclamação
-      </Button>
-    );
-  }
-
-  if (tratamentoAberto) {
-    return (
-      <>
-        <Button
-          type="button"
-          className="w-full"
-          onClick={() =>
-            setErro(
-              "Não é possível encerrar a reclamação com tratamento em andamento. Finalize o tratamento antes."
-            )
-          }
-        >
-          Encerrar reclamação
-        </Button>
-        {erro && (
-          <FeedbackModal
-            variant="warning"
-            title="Atenção"
-            message={erro}
-            onClose={() => setErro("")}
-          />
-        )}
-      </>
-    );
-  }
-
   return (
     <>
-      <Button type="button" className="w-full" onClick={() => setAberto(true)}>
-        Encerrar reclamação
+      <Button
+        type="button"
+        variant="secondary"
+        className="w-full"
+        onClick={() => setAberto(true)}
+      >
+        Adicionar evolução
       </Button>
 
       {aberto && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
           <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
-            <h2 className="text-lg font-semibold">Encerrar reclamação</h2>
+            <h2 className="text-lg font-semibold">Evolução do tratamento</h2>
             <p className="mt-2 text-sm text-[var(--muted)]">
-              Informe o parecer final. Ao encerrar, a reclamação será finalizada
-              e o NPS será gerado.
+              Registre o retorno ou andamento do cuidado. Se houver novo
+              agendamento, informe a próxima data.
             </p>
             <form action={enviar} className="mt-4 space-y-4">
-              <input type="hidden" name="id" value={reclamacaoId} />
+              <input type="hidden" name="id" value={tratamentoId} />
               <div className="space-y-2">
-                <Label htmlFor="parecerFinal">Parecer final</Label>
+                <Label htmlFor="evolucao">Evolução</Label>
                 <Textarea
-                  id="parecerFinal"
-                  name="parecerFinal"
+                  id="evolucao"
+                  name="evolucao"
                   required
                   rows={4}
+                  placeholder="Ex.: Paciente compareceu e realizamos ajustes na prótese"
                 />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="dataProxima">Próximo retorno (opcional)</Label>
+                <Input id="dataProxima" name="dataProxima" type="date" />
               </div>
               <div className="flex justify-end gap-2">
                 <Button
@@ -96,7 +69,7 @@ export function EncerrarReclamacaoButton({
                 >
                   Cancelar
                 </Button>
-                <Button type="submit">Encerrar</Button>
+                <Button type="submit">Salvar</Button>
               </div>
             </form>
           </div>
@@ -109,7 +82,7 @@ export function EncerrarReclamacaoButton({
           title={
             variantFromMessage(erro) === "warning"
               ? "Atenção"
-              : "Não foi possível encerrar"
+              : "Não foi possível salvar"
           }
           message={erro}
           onClose={() => setErro("")}

@@ -19,6 +19,10 @@ import {
   gerarProtocolo,
   primeiraEtapa,
 } from "@/lib/reclamacao";
+import {
+  sendReclamacaoAbertaEmail,
+  sendReclamacaoEncerradaEmail,
+} from "@/lib/email";
 import type {
   CanalOrigem,
   Cargo,
@@ -302,9 +306,21 @@ export async function createReclamacao(
     const clinicId = String(formData.get("clinicId") || "");
     const pacienteNome = String(formData.get("pacienteNome") || "").trim();
     const descricao = String(formData.get("descricao") || "").trim();
+    const responsavelId = String(formData.get("responsavelId") || "").trim();
 
     if (!pacienteNome || !clinicId || !descricao) {
       return actionFail("Preencha paciente, clínica e descrição.");
+    }
+    if (!responsavelId) {
+      return actionFail("Selecione o responsável pelo atendimento.");
+    }
+
+    const responsavel = await prisma.user.findFirst({
+      where: { id: responsavelId, active: true },
+      select: { id: true },
+    });
+    if (!responsavel) {
+      return actionFail("Responsável pelo atendimento inválido.");
     }
 
     const reclamacao = await prisma.reclamacao.create({
@@ -319,8 +335,7 @@ export async function createReclamacao(
         prioridade: String(formData.get("prioridade") || "MEDIA") as Prioridade,
         descricao,
         etapaId: etapa?.id,
-        responsavelId:
-          String(formData.get("responsavelId") || "") || session.user.id,
+        responsavelId,
         criadoPorId: session.user.id,
         prazoEm: calcularPrazo(etapa),
         status: "ABERTA",
@@ -332,7 +347,32 @@ export async function createReclamacao(
           },
         },
       },
+      include: {
+        clinic: true,
+        responsavel: true,
+        criadoPor: true,
+        etapa: true,
+      },
     });
+
+    const destinatario =
+      reclamacao.responsavel?.email || reclamacao.criadoPor.email;
+    const nomeResponsavel =
+      reclamacao.responsavel?.name || reclamacao.criadoPor.name;
+
+    if (destinatario) {
+      await sendReclamacaoAbertaEmail({
+        to: destinatario,
+        reclamacaoId: reclamacao.id,
+        protocolo: reclamacao.protocolo,
+        pacienteNome: reclamacao.pacienteNome,
+        clinica: reclamacao.clinic.name,
+        etapa: reclamacao.etapa?.nome ?? null,
+        prazoEm: reclamacao.prazoEm,
+        descricao: reclamacao.descricao,
+        responsavelAtendimento: nomeResponsavel,
+      }).catch((error) => console.error("[email:abertura]", error));
+    }
 
     revalidatePath("/reclamacoes");
     revalidatePath("/agenda");
@@ -390,6 +430,15 @@ export async function encerrarReclamacao(
     return actionFail("Informe o parecer final.");
   }
 
+  const tratamentoAberto = await prisma.tratamento.findFirst({
+    where: { reclamacaoId: id, status: "EM_ANDAMENTO" },
+  });
+  if (tratamentoAberto) {
+    return actionFail(
+      "Não é possível encerrar a reclamação com tratamento em andamento. Finalize o tratamento antes."
+    );
+  }
+
   const result = await runAction(async () => {
     await prisma.$transaction(async (tx) => {
       await tx.reclamacao.update({
@@ -418,6 +467,36 @@ export async function encerrarReclamacao(
         });
       }
     });
+
+    const reclamacao = await prisma.reclamacao.findUnique({
+      where: { id },
+      include: {
+        clinic: true,
+        responsavel: true,
+        criadoPor: true,
+      },
+    });
+
+    if (reclamacao) {
+      const destinatario =
+        reclamacao.responsavel?.email || reclamacao.criadoPor.email;
+      const nomeResponsavel =
+        reclamacao.responsavel?.name || reclamacao.criadoPor.name;
+
+      if (destinatario) {
+        await sendReclamacaoEncerradaEmail({
+          to: destinatario,
+          reclamacaoId: reclamacao.id,
+          protocolo: reclamacao.protocolo,
+          pacienteNome: reclamacao.pacienteNome,
+          clinica: reclamacao.clinic.name,
+          descricao: reclamacao.descricao,
+          parecerFinal,
+          responsavelAtendimento: nomeResponsavel,
+        }).catch((error) => console.error("[email:encerramento]", error));
+      }
+    }
+
     revalidatePath(`/reclamacoes/${id}`);
     revalidatePath("/reclamacoes");
     revalidatePath("/agenda");
@@ -460,33 +539,178 @@ export async function updateReclamacaoStatus(
   }, "Não foi possível atualizar a reclamação.");
 }
 
-export async function createTratamento(formData: FormData): Promise<void> {
-  await runAction(async () => {
+export async function createTratamento(
+  formData: FormData
+): Promise<ActionResultWithId> {
+  try {
     const session = await requireSession();
-    const reclamacaoId = String(formData.get("reclamacaoId"));
-    await prisma.tratamento.create({
+    const reclamacaoId = String(formData.get("reclamacaoId") || "");
+    const descricao = String(formData.get("descricao") || "").trim();
+    const responsavelId = String(formData.get("responsavelId") || "").trim();
+    const clinicId = String(formData.get("clinicId") || "").trim();
+    const dataProximaRaw = String(formData.get("dataProxima") || "").trim();
+
+    if (!reclamacaoId || !descricao || !responsavelId || !clinicId || !dataProximaRaw) {
+      return actionFail(
+        "Preencha descrição, responsável, clínica e data do próximo tratamento."
+      );
+    }
+
+    const existente = await prisma.tratamento.findUnique({
+      where: { reclamacaoId },
+    });
+    if (existente) {
+      return actionFail("Esta reclamação já possui um tratamento vinculado.");
+    }
+
+    const dataProxima = new Date(`${dataProximaRaw}T12:00:00`);
+    if (Number.isNaN(dataProxima.getTime())) {
+      return actionFail("Informe uma data válida para o próximo tratamento.");
+    }
+
+    const tratamento = await prisma.tratamento.create({
       data: {
         reclamacaoId,
-        descricao: String(formData.get("descricao")),
-        responsavelId: session.user.id,
+        clinicId,
+        descricao,
+        responsavelId,
+        dataProxima,
+        status: "EM_ANDAMENTO",
+        historicos: {
+          create: {
+            usuarioId: session.user.id,
+            acao: "ABERTURA",
+            detalhe: "Tratamento vinculado à reclamação",
+          },
+        },
       },
     });
+
     revalidatePath("/tratamentos");
+    revalidatePath(`/tratamentos/${tratamento.id}`);
     revalidatePath(`/reclamacoes/${reclamacaoId}`);
-  }, "Não foi possível vincular o tratamento.");
+    return actionOkId(tratamento.id);
+  } catch (error) {
+    console.error(error);
+    return actionFail(
+      mapPrismaError(error, "Não foi possível vincular o tratamento.")
+    );
+  }
+}
+
+export async function adicionarEvolucaoTratamento(
+  formData: FormData
+): Promise<ActionResult> {
+  const session = await requireSession();
+  const id = String(formData.get("id") || "");
+  const evolucao = String(formData.get("evolucao") || "").trim();
+  const dataProximaRaw = String(formData.get("dataProxima") || "").trim();
+
+  if (!evolucao) {
+    return actionFail("Informe o texto da evolução.");
+  }
+
+  const tratamento = await prisma.tratamento.findUnique({ where: { id } });
+  if (!tratamento) {
+    return actionFail("Tratamento não encontrado.");
+  }
+  if (tratamento.status !== "EM_ANDAMENTO") {
+    return actionFail("Não é possível evoluir um tratamento finalizado.");
+  }
+
+  let dataProxima: Date | undefined;
+  if (dataProximaRaw) {
+    dataProxima = new Date(`${dataProximaRaw}T12:00:00`);
+    if (Number.isNaN(dataProxima.getTime())) {
+      return actionFail("Informe uma data válida para o próximo retorno.");
+    }
+  }
+
+  const result = await runAction(async () => {
+    await prisma.tratamento.update({
+      where: { id },
+      data: {
+        ...(dataProxima ? { dataProxima } : {}),
+        historicos: {
+          create: {
+            usuarioId: session.user.id,
+            acao: "EVOLUCAO",
+            detalhe: evolucao,
+          },
+        },
+      },
+    });
+    revalidatePath(`/tratamentos/${id}`);
+    revalidatePath("/tratamentos");
+    revalidatePath(`/reclamacoes/${tratamento.reclamacaoId}`);
+  }, "Não foi possível salvar a evolução do tratamento.");
+
+  if (!result.ok) return result;
+  redirect(`/tratamentos/${id}`);
+}
+
+export async function finalizarTratamento(
+  formData: FormData
+): Promise<ActionResult> {
+  const session = await requireSession();
+  const id = String(formData.get("id") || "");
+  const parecer = String(formData.get("parecer") || "").trim();
+
+  if (!parecer) {
+    return actionFail("Informe o parecer de finalização.");
+  }
+
+  const tratamento = await prisma.tratamento.findUnique({ where: { id } });
+  if (!tratamento) {
+    return actionFail("Tratamento não encontrado.");
+  }
+  if (tratamento.status !== "EM_ANDAMENTO") {
+    return actionFail("Este tratamento já está finalizado.");
+  }
+
+  const result = await runAction(async () => {
+    await prisma.tratamento.update({
+      where: { id },
+      data: {
+        status: "CONCLUIDO",
+        finalizadoEm: new Date(),
+        historicos: {
+          create: {
+            usuarioId: session.user.id,
+            acao: "FINALIZACAO",
+            detalhe: parecer,
+          },
+        },
+      },
+    });
+    revalidatePath(`/tratamentos/${id}`);
+    revalidatePath("/tratamentos");
+    revalidatePath(`/reclamacoes/${tratamento.reclamacaoId}`);
+  }, "Não foi possível finalizar o tratamento.");
+
+  if (!result.ok) return result;
+  redirect(`/tratamentos/${id}`);
 }
 
 export async function updateTratamentoStatus(
   formData: FormData
-): Promise<void> {
-  await runAction(async () => {
+): Promise<ActionResult> {
+  return runAction(async () => {
     await requireSession();
     const id = String(formData.get("id"));
+    const status = String(formData.get("status"));
     await prisma.tratamento.update({
       where: { id },
-      data: { status: String(formData.get("status")) },
+      data: {
+        status,
+        finalizadoEm:
+          status === "CONCLUIDO" || status === "CANCELADO"
+            ? new Date()
+            : null,
+      },
     });
     revalidatePath("/tratamentos");
+    revalidatePath(`/tratamentos/${id}`);
   }, "Não foi possível atualizar o tratamento.");
 }
 

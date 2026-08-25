@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import QRCode from "qrcode";
 import { prisma } from "@/lib/prisma";
 import { requireSession } from "@/lib/session";
 import { createTratamento } from "@/app/actions";
@@ -8,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { EncerrarReclamacaoButton } from "@/components/encerrar-reclamacao-button";
 import { EvolucaoReclamacaoButton } from "@/components/evolucao-reclamacao-button";
+import { NpsCompartilhar } from "@/components/nps-compartilhar";
 import {
   canalLabels,
   motivoLabels,
@@ -55,6 +57,19 @@ export default async function ReclamacaoDetalhePage({
   });
 
   if (!item) notFound();
+
+  const jaEncerrada =
+    Boolean(item.nps) ||
+    item.status === "ENCERRADA" ||
+    item.status === "CONCLUIDA";
+
+  const baseUrl =
+    process.env.NEXT_PUBLIC_APP_URL ||
+    process.env.BETTER_AUTH_URL ||
+    "http://localhost:3000";
+
+  const npsUrl = item.nps ? `${baseUrl}/nps/${item.nps.token}` : null;
+  const npsQr = npsUrl ? await QRCode.toDataURL(npsUrl) : null;
 
   return (
     <div className="space-y-6">
@@ -154,15 +169,20 @@ export default async function ReclamacaoDetalhePage({
               <CardTitle>Ações</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <EvolucaoReclamacaoButton reclamacaoId={item.id} />
+              {!jaEncerrada && (
+                <EvolucaoReclamacaoButton reclamacaoId={item.id} />
+              )}
               <EncerrarReclamacaoButton
                 reclamacaoId={item.id}
-                jaEncerrada={
-                  Boolean(item.nps) ||
-                  item.status === "ENCERRADA" ||
-                  item.status === "CONCLUIDA"
-                }
+                jaEncerrada={jaEncerrada}
               />
+              {item.nps && npsUrl && npsQr && (
+                <NpsCompartilhar
+                  protocolo={item.protocolo}
+                  url={npsUrl}
+                  qrDataUrl={npsQr}
+                />
+              )}
             </CardContent>
           </Card>
 

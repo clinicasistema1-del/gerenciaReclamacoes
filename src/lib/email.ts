@@ -30,7 +30,9 @@ export async function sendSlaEmail(params: {
       <ul>
         <li><strong>Paciente:</strong> ${params.pacienteNome}</li>
         <li><strong>Clínica:</strong> ${params.clinica}</li>
-        <li><strong>Prazo:</strong> ${params.prazoEm.toLocaleString("pt-BR")}</li>
+        <li><strong>Prazo:</strong> ${params.prazoEm.toLocaleString("pt-BR", {
+          timeZone: "America/Sao_Paulo",
+        })}</li>
       </ul>
       <p>
         <a href="${appUrl}/reclamacoes" style="display:inline-block;background:#ffce00;color:#111;padding:10px 16px;border-radius:6px;text-decoration:none;font-weight:600;">

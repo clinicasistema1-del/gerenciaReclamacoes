@@ -5,7 +5,10 @@ import { createUser } from "@/app/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { FeedbackModal } from "@/components/feedback-modal";
+import {
+  FeedbackModal,
+  variantFromMessage,
+} from "@/components/feedback-modal";
 import { cargoLabels, roleLabels } from "@/lib/labels";
 
 const selectClass =
@@ -88,13 +91,19 @@ export function UsuarioNovaForm({
       </form>
       {erro && (
         <FeedbackModal
-          title="Não foi possível cadastrar"
+          variant={variantFromMessage(erro)}
+          title={
+            variantFromMessage(erro) === "warning"
+              ? "Atenção"
+              : "Não foi possível cadastrar"
+          }
           message={erro}
           onClose={() => setErro("")}
         />
       )}
       {sucesso && (
         <FeedbackModal
+          variant="success"
           title="Cadastro realizado"
           message={sucesso}
           onClose={() => setSucesso("")}

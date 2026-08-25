@@ -40,6 +40,7 @@ export function ClinicasLista({ clinicas }: { clinicas: Clinica[] }) {
       </section>
       {sucesso && (
         <FeedbackModal
+          variant="success"
           title="Concluído"
           message={sucesso}
           onClose={() => setSucesso("")}

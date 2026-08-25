@@ -6,7 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ClinicaLocalidadeFields } from "@/components/clinica-localidade-fields";
-import { FeedbackModal } from "@/components/feedback-modal";
+import {
+  FeedbackModal,
+  variantFromMessage,
+} from "@/components/feedback-modal";
 
 export function ClinicaNovaForm() {
   const formRef = useRef<HTMLFormElement>(null);
@@ -37,13 +40,19 @@ export function ClinicaNovaForm() {
       </form>
       {erro && (
         <FeedbackModal
-          title="Não foi possível cadastrar"
+          variant={variantFromMessage(erro)}
+          title={
+            variantFromMessage(erro) === "warning"
+              ? "Atenção"
+              : "Não foi possível cadastrar"
+          }
           message={erro}
           onClose={() => setErro("")}
         />
       )}
       {sucesso && (
         <FeedbackModal
+          variant="success"
           title="Cadastro realizado"
           message={sucesso}
           onClose={() => setSucesso("")}

@@ -8,7 +8,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { SearchableSelect } from "@/components/ui/searchable-select";
-import { FeedbackModal } from "@/components/feedback-modal";
+import {
+  FeedbackModal,
+  variantFromMessage,
+} from "@/components/feedback-modal";
 import { canalLabels, motivoLabels, prioridadeLabels } from "@/lib/labels";
 
 export function ReclamacaoNovaForm({
@@ -133,7 +136,12 @@ export function ReclamacaoNovaForm({
       </form>
       {erro && (
         <FeedbackModal
-          title="Não foi possível abrir"
+          variant={variantFromMessage(erro)}
+          title={
+            variantFromMessage(erro) === "warning"
+              ? "Atenção"
+              : "Não foi possível abrir"
+          }
           message={erro}
           onClose={() => setErro("")}
         />

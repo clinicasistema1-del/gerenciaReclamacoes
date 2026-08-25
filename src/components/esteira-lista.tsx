@@ -48,6 +48,7 @@ export function EsteiraLista({
       </section>
       {sucesso && (
         <FeedbackModal
+          variant="success"
           title="Concluído"
           message={sucesso}
           onClose={() => setSucesso("")}

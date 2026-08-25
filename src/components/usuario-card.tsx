@@ -1,14 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import { Trash2 } from "lucide-react";
+import { AlertTriangle, Trash2 } from "lucide-react";
 import { updateUser, deleteUser } from "@/app/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { FeedbackModal } from "@/components/feedback-modal";
+import {
+  FeedbackModal,
+  variantFromMessage,
+} from "@/components/feedback-modal";
 import { cargoLabels, roleLabels } from "@/lib/labels";
 
 const selectClass =
@@ -182,44 +185,68 @@ export function UsuarioCard({
 
       {aberto && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-          <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
-            <h2 className="text-lg font-semibold">Excluir usuário</h2>
-            {ehLogado ? (
-              <p className="mt-2 text-sm text-red-700">
-                Não é possível excluir o usuário logado.
-              </p>
-            ) : podeExcluir ? (
-              <p className="mt-2 text-sm text-[var(--muted)]">
-                Confirma a exclusão de <strong>{usuario.name}</strong>? Esta ação
-                não pode ser desfeita.
-              </p>
-            ) : (
-              <p className="mt-2 text-sm text-red-700">
-                Não é possível excluir <strong>{usuario.name}</strong>. Há{" "}
-                {usuario.reclamacoes} reclamação(ões), {usuario.tratamentos}{" "}
-                tratamento(s), {usuario.historicos} registro(s) de histórico e{" "}
-                {usuario.etapas} etapa(s) da esteira vinculados.
-              </p>
-            )}
-            {erro && <p className="mt-2 text-sm text-red-700">{erro}</p>}
-            <div className="mt-5 flex justify-end gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setAberto(false)}
-              >
-                Cancelar
-              </Button>
-              {podeExcluir && (
+          <div className="w-full max-w-md overflow-hidden rounded-xl border border-[var(--border)] bg-white shadow-xl">
+            {!podeExcluir && <div className="h-1.5 w-full bg-amber-500" />}
+            <div className="p-6">
+              <div className="flex gap-3">
+                {!podeExcluir && (
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-100">
+                    <AlertTriangle
+                      className="h-5 w-5 text-amber-700"
+                      aria-hidden
+                    />
+                  </div>
+                )}
+                <div className="min-w-0 flex-1">
+                  <h2
+                    className={`text-lg font-semibold ${
+                      podeExcluir ? "" : "text-amber-950"
+                    }`}
+                  >
+                    {podeExcluir ? "Excluir usuário" : "Atenção"}
+                  </h2>
+                  {ehLogado ? (
+                    <p className="mt-2 text-sm text-[var(--muted)]">
+                      Não é possível excluir o usuário logado.
+                    </p>
+                  ) : podeExcluir ? (
+                    <p className="mt-2 text-sm text-[var(--muted)]">
+                      Confirma a exclusão de <strong>{usuario.name}</strong>?
+                      Esta ação não pode ser desfeita.
+                    </p>
+                  ) : (
+                    <p className="mt-2 text-sm text-[var(--muted)]">
+                      Não é possível excluir <strong>{usuario.name}</strong>. Há{" "}
+                      {usuario.reclamacoes} reclamação(ões),{" "}
+                      {usuario.tratamentos} tratamento(s), {usuario.historicos}{" "}
+                      registro(s) de histórico e {usuario.etapas} etapa(s) da
+                      esteira vinculados.
+                    </p>
+                  )}
+                  {erro && (
+                    <p className="mt-2 text-sm text-red-700">{erro}</p>
+                  )}
+                </div>
+              </div>
+              <div className="mt-5 flex justify-end gap-2">
                 <Button
                   type="button"
-                  variant="danger"
-                  disabled={enviando}
-                  onClick={confirmar}
+                  variant="outline"
+                  onClick={() => setAberto(false)}
                 >
-                  {enviando ? "Excluindo..." : "Excluir"}
+                  {podeExcluir ? "Cancelar" : "Fechar"}
                 </Button>
-              )}
+                {podeExcluir && (
+                  <Button
+                    type="button"
+                    variant="danger"
+                    disabled={enviando}
+                    onClick={confirmar}
+                  >
+                    {enviando ? "Excluindo..." : "Excluir"}
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -227,13 +254,19 @@ export function UsuarioCard({
 
       {erro && !aberto && (
         <FeedbackModal
-          title="Não foi possível salvar"
+          variant={variantFromMessage(erro)}
+          title={
+            variantFromMessage(erro) === "warning"
+              ? "Atenção"
+              : "Não foi possível salvar"
+          }
           message={erro}
           onClose={() => setErro("")}
         />
       )}
       {sucesso && (
         <FeedbackModal
+          variant="success"
           title="Concluído"
           message={sucesso}
           onClose={() => setSucesso("")}

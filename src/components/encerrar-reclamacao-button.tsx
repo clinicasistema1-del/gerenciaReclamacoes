@@ -5,7 +5,10 @@ import { encerrarReclamacao } from "@/app/actions";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { FeedbackModal } from "@/components/feedback-modal";
+import {
+  FeedbackModal,
+  variantFromMessage,
+} from "@/components/feedback-modal";
 
 export function EncerrarReclamacaoButton({
   reclamacaoId,
@@ -74,7 +77,12 @@ export function EncerrarReclamacaoButton({
 
       {erro && (
         <FeedbackModal
-          title="Não foi possível encerrar"
+          variant={variantFromMessage(erro)}
+          title={
+            variantFromMessage(erro) === "warning"
+              ? "Atenção"
+              : "Não foi possível encerrar"
+          }
           message={erro}
           onClose={() => setErro("")}
         />

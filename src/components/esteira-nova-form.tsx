@@ -5,7 +5,10 @@ import { createEsteira } from "@/app/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { FeedbackModal } from "@/components/feedback-modal";
+import {
+  FeedbackModal,
+  variantFromMessage,
+} from "@/components/feedback-modal";
 
 const selectClass =
   "flex h-10 w-full rounded-md border border-[var(--border)] bg-white px-3 text-sm";
@@ -69,13 +72,19 @@ export function EsteiraNovaForm({
       </form>
       {erro && (
         <FeedbackModal
-          title="Não foi possível cadastrar"
+          variant={variantFromMessage(erro)}
+          title={
+            variantFromMessage(erro) === "warning"
+              ? "Atenção"
+              : "Não foi possível cadastrar"
+          }
           message={erro}
           onClose={() => setErro("")}
         />
       )}
       {sucesso && (
         <FeedbackModal
+          variant="success"
           title="Cadastro realizado"
           message={sucesso}
           onClose={() => setSucesso("")}

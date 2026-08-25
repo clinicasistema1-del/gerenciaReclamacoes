@@ -5,7 +5,10 @@ import { adicionarEvolucao } from "@/app/actions";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { FeedbackModal } from "@/components/feedback-modal";
+import {
+  FeedbackModal,
+  variantFromMessage,
+} from "@/components/feedback-modal";
 
 export function EvolucaoReclamacaoButton({
   reclamacaoId,
@@ -70,7 +73,12 @@ export function EvolucaoReclamacaoButton({
 
       {erro && (
         <FeedbackModal
-          title="Não foi possível salvar"
+          variant={variantFromMessage(erro)}
+          title={
+            variantFromMessage(erro) === "warning"
+              ? "Atenção"
+              : "Não foi possível salvar"
+          }
           message={erro}
           onClose={() => setErro("")}
         />

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Trash2 } from "lucide-react";
+import { AlertTriangle, Trash2 } from "lucide-react";
 import { updateClinic, deleteClinic } from "@/app/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,7 +9,10 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ClinicaLocalidadeFields } from "@/components/clinica-localidade-fields";
-import { FeedbackModal } from "@/components/feedback-modal";
+import {
+  FeedbackModal,
+  variantFromMessage,
+} from "@/components/feedback-modal";
 
 type Clinica = {
   id: string;
@@ -111,39 +114,62 @@ export function ClinicaCard({
 
       {aberto && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-          <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
-            <h2 className="text-lg font-semibold">Excluir clínica</h2>
-            {podeExcluir ? (
-              <p className="mt-2 text-sm text-[var(--muted)]">
-                Confirma a exclusão de <strong>{clinica.name}</strong>? Esta ação
-                não pode ser desfeita.
-              </p>
-            ) : (
-              <p className="mt-2 text-sm text-red-700">
-                Não é possível excluir <strong>{clinica.name}</strong>. Há{" "}
-                {clinica.users} usuário(s) e {clinica.reclamacoes} reclamação(ões)
-                vinculados a esta unidade.
-              </p>
-            )}
-            {erro && <p className="mt-2 text-sm text-red-700">{erro}</p>}
-            <div className="mt-5 flex justify-end gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setAberto(false)}
-              >
-                Cancelar
-              </Button>
-              {podeExcluir && (
+          <div className="w-full max-w-md overflow-hidden rounded-xl border border-[var(--border)] bg-white shadow-xl">
+            {!podeExcluir && <div className="h-1.5 w-full bg-amber-500" />}
+            <div className="p-6">
+              <div className="flex gap-3">
+                {!podeExcluir && (
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-100">
+                    <AlertTriangle
+                      className="h-5 w-5 text-amber-700"
+                      aria-hidden
+                    />
+                  </div>
+                )}
+                <div className="min-w-0 flex-1">
+                  <h2
+                    className={`text-lg font-semibold ${
+                      podeExcluir ? "" : "text-amber-950"
+                    }`}
+                  >
+                    {podeExcluir ? "Excluir clínica" : "Atenção"}
+                  </h2>
+                  {podeExcluir ? (
+                    <p className="mt-2 text-sm text-[var(--muted)]">
+                      Confirma a exclusão de <strong>{clinica.name}</strong>?
+                      Esta ação não pode ser desfeita.
+                    </p>
+                  ) : (
+                    <p className="mt-2 text-sm text-[var(--muted)]">
+                      Não é possível excluir <strong>{clinica.name}</strong>. Há{" "}
+                      {clinica.users} usuário(s) e {clinica.reclamacoes}{" "}
+                      reclamação(ões) vinculados a esta unidade.
+                    </p>
+                  )}
+                  {erro && (
+                    <p className="mt-2 text-sm text-red-700">{erro}</p>
+                  )}
+                </div>
+              </div>
+              <div className="mt-5 flex justify-end gap-2">
                 <Button
                   type="button"
-                  variant="danger"
-                  disabled={enviando}
-                  onClick={confirmar}
+                  variant="outline"
+                  onClick={() => setAberto(false)}
                 >
-                  {enviando ? "Excluindo..." : "Excluir"}
+                  {podeExcluir ? "Cancelar" : "Fechar"}
                 </Button>
-              )}
+                {podeExcluir && (
+                  <Button
+                    type="button"
+                    variant="danger"
+                    disabled={enviando}
+                    onClick={confirmar}
+                  >
+                    {enviando ? "Excluindo..." : "Excluir"}
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -151,13 +177,19 @@ export function ClinicaCard({
 
       {erro && !aberto && (
         <FeedbackModal
-          title="Não foi possível salvar"
+          variant={variantFromMessage(erro)}
+          title={
+            variantFromMessage(erro) === "warning"
+              ? "Atenção"
+              : "Não foi possível salvar"
+          }
           message={erro}
           onClose={() => setErro("")}
         />
       )}
       {sucesso && (
         <FeedbackModal
+          variant="success"
           title="Concluído"
           message={sucesso}
           onClose={() => setSucesso("")}

@@ -40,7 +40,11 @@ export function EsteiraCard({
   const podeExcluir = etapa.reclamacoes === 0;
 
   async function salvar(formData: FormData) {
-    await updateEsteira(formData);
+    const result = await updateEsteira(formData);
+    if (!result.ok) {
+      setErro(result.error);
+      return;
+    }
     setSucesso("Etapa atualizada.");
   }
 
@@ -52,7 +56,9 @@ export function EsteiraCard({
     setEnviando(false);
     if (!result.ok) {
       setErro(
-        `Não é possível excluir. Há ${result.reclamacoes} reclamação(ões) vinculadas.`
+        "error" in result && result.error
+          ? result.error
+          : `Não é possível excluir. Há ${result.reclamacoes} reclamação(ões) vinculadas.`
       );
       return;
     }
@@ -189,6 +195,13 @@ export function EsteiraCard({
         </div>
       )}
 
+      {erro && !aberto && (
+        <FeedbackModal
+          title="Não foi possível salvar"
+          message={erro}
+          onClose={() => setErro("")}
+        />
+      )}
       {sucesso && (
         <FeedbackModal
           title="Concluído"

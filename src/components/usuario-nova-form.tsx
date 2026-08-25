@@ -21,7 +21,6 @@ export function UsuarioNovaForm({
   const [erro, setErro] = useState("");
 
   async function cadastrar(formData: FormData) {
-    setErro("");
     const result = await createUser(formData);
     if (!result.ok) {
       setErro(result.error);
@@ -83,13 +82,17 @@ export function UsuarioNovaForm({
             ))}
           </select>
         </div>
-        {erro && (
-          <p className="text-sm text-red-700 md:col-span-3">{erro}</p>
-        )}
         <div className="flex items-end md:col-span-3">
           <Button type="submit">Cadastrar</Button>
         </div>
       </form>
+      {erro && (
+        <FeedbackModal
+          title="Não foi possível cadastrar"
+          message={erro}
+          onClose={() => setErro("")}
+        />
+      )}
       {sucesso && (
         <FeedbackModal
           title="Cadastro realizado"

@@ -52,7 +52,11 @@ export function UsuarioCard({
     usuario.etapas === 0;
 
   async function salvar(formData: FormData) {
-    await updateUser(formData);
+    const result = await updateUser(formData);
+    if (!result.ok) {
+      setErro(result.error);
+      return;
+    }
     setSucesso("Usuário atualizado.");
   }
 
@@ -63,6 +67,10 @@ export function UsuarioCard({
     const result = await deleteUser(usuario.id);
     setEnviando(false);
     if (!result.ok) {
+      if ("error" in result && result.error) {
+        setErro(result.error);
+        return;
+      }
       if (result.motivo === "self") {
         setErro("Não é possível excluir o usuário logado.");
         return;
@@ -217,6 +225,13 @@ export function UsuarioCard({
         </div>
       )}
 
+      {erro && !aberto && (
+        <FeedbackModal
+          title="Não foi possível salvar"
+          message={erro}
+          onClose={() => setErro("")}
+        />
+      )}
       {sucesso && (
         <FeedbackModal
           title="Concluído"

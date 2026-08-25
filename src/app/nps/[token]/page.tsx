@@ -8,10 +8,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default async function NpsPublicPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ token: string }>;
+  searchParams: Promise<{ ok?: string; erro?: string }>;
 }) {
   const { token } = await params;
+  const query = await searchParams;
   const nps = await prisma.npsResposta.findUnique({
     where: { token },
     include: { reclamacao: { include: { clinic: true } } },
@@ -21,7 +24,10 @@ export default async function NpsPublicPage({
 
   async function action(formData: FormData) {
     "use server";
-    await submitNps(formData);
+    const result = await submitNps(formData);
+    if (!result.ok) {
+      redirect(`/nps/${token}?erro=1`);
+    }
     redirect(`/nps/${token}?ok=1`);
   }
 
@@ -40,12 +46,17 @@ export default async function NpsPublicPage({
           </p>
         </CardHeader>
         <CardContent>
-          {nps.respondidoEm ? (
+          {nps.respondidoEm || query.ok ? (
             <p className="text-[var(--ink)]">
-              Obrigado! Sua nota {nps.nota} já foi registrada.
+              Obrigado! Sua avaliação foi registrada.
             </p>
           ) : (
             <form action={action} className="space-y-4">
+              {query.erro && (
+                <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">
+                  Não foi possível registrar a avaliação. Tente novamente.
+                </p>
+              )}
               <input type="hidden" name="token" value={token} />
               <div className="space-y-2">
                 <Label>De 0 a 10, quanto você recomendaria a clínica?</Label>

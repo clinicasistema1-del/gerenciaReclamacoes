@@ -5,6 +5,7 @@ import { encerrarReclamacao } from "@/app/actions";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { FeedbackModal } from "@/components/feedback-modal";
 
 export function EncerrarReclamacaoButton({
   reclamacaoId,
@@ -14,6 +15,14 @@ export function EncerrarReclamacaoButton({
   jaEncerrada: boolean;
 }) {
   const [aberto, setAberto] = useState(false);
+  const [erro, setErro] = useState("");
+
+  async function enviar(formData: FormData) {
+    const result = await encerrarReclamacao(formData);
+    if (result && !result.ok) {
+      setErro(result.error);
+    }
+  }
 
   if (jaEncerrada) {
     return (
@@ -37,7 +46,7 @@ export function EncerrarReclamacaoButton({
               Informe o parecer final. Ao encerrar, a reclamação será finalizada
               e o NPS será gerado.
             </p>
-            <form action={encerrarReclamacao} className="mt-4 space-y-4">
+            <form action={enviar} className="mt-4 space-y-4">
               <input type="hidden" name="id" value={reclamacaoId} />
               <div className="space-y-2">
                 <Label htmlFor="parecerFinal">Parecer final</Label>
@@ -61,6 +70,14 @@ export function EncerrarReclamacaoButton({
             </form>
           </div>
         </div>
+      )}
+
+      {erro && (
+        <FeedbackModal
+          title="Não foi possível encerrar"
+          message={erro}
+          onClose={() => setErro("")}
+        />
       )}
     </>
   );

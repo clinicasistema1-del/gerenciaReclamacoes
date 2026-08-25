@@ -5,6 +5,7 @@ import { adicionarEvolucao } from "@/app/actions";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { FeedbackModal } from "@/components/feedback-modal";
 
 export function EvolucaoReclamacaoButton({
   reclamacaoId,
@@ -12,6 +13,14 @@ export function EvolucaoReclamacaoButton({
   reclamacaoId: string;
 }) {
   const [aberto, setAberto] = useState(false);
+  const [erro, setErro] = useState("");
+
+  async function enviar(formData: FormData) {
+    const result = await adicionarEvolucao(formData);
+    if (result && !result.ok) {
+      setErro(result.error);
+    }
+  }
 
   return (
     <>
@@ -32,7 +41,7 @@ export function EvolucaoReclamacaoButton({
               Descreva o andamento do atendimento. O registro será incluído no
               histórico da reclamação.
             </p>
-            <form action={adicionarEvolucao} className="mt-4 space-y-4">
+            <form action={enviar} className="mt-4 space-y-4">
               <input type="hidden" name="id" value={reclamacaoId} />
               <div className="space-y-2">
                 <Label htmlFor="evolucao">Evolução</Label>
@@ -57,6 +66,14 @@ export function EvolucaoReclamacaoButton({
             </form>
           </div>
         </div>
+      )}
+
+      {erro && (
+        <FeedbackModal
+          title="Não foi possível salvar"
+          message={erro}
+          onClose={() => setErro("")}
+        />
       )}
     </>
   );

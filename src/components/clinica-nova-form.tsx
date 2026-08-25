@@ -11,9 +11,14 @@ import { FeedbackModal } from "@/components/feedback-modal";
 export function ClinicaNovaForm() {
   const formRef = useRef<HTMLFormElement>(null);
   const [sucesso, setSucesso] = useState("");
+  const [erro, setErro] = useState("");
 
   async function cadastrar(formData: FormData) {
-    await createClinic(formData);
+    const result = await createClinic(formData);
+    if (!result.ok) {
+      setErro(result.error);
+      return;
+    }
     formRef.current?.reset();
     setSucesso("Clínica cadastrada.");
   }
@@ -30,6 +35,13 @@ export function ClinicaNovaForm() {
           <Button type="submit">Cadastrar</Button>
         </div>
       </form>
+      {erro && (
+        <FeedbackModal
+          title="Não foi possível cadastrar"
+          message={erro}
+          onClose={() => setErro("")}
+        />
+      )}
       {sucesso && (
         <FeedbackModal
           title="Cadastro realizado"

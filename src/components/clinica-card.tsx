@@ -35,7 +35,11 @@ export function ClinicaCard({
   const podeExcluir = clinica.users === 0 && clinica.reclamacoes === 0;
 
   async function salvar(formData: FormData) {
-    await updateClinic(formData);
+    const result = await updateClinic(formData);
+    if (!result.ok) {
+      setErro(result.error);
+      return;
+    }
     setSucesso("Clínica atualizada.");
   }
 
@@ -47,7 +51,9 @@ export function ClinicaCard({
     setEnviando(false);
     if (!result.ok) {
       setErro(
-        `Não é possível excluir. Há ${result.users} usuário(s) e ${result.reclamacoes} reclamação(ões) vinculados.`
+        "error" in result && result.error
+          ? result.error
+          : `Não é possível excluir. Há ${result.users} usuário(s) e ${result.reclamacoes} reclamação(ões) vinculados.`
       );
       return;
     }
@@ -143,6 +149,13 @@ export function ClinicaCard({
         </div>
       )}
 
+      {erro && !aberto && (
+        <FeedbackModal
+          title="Não foi possível salvar"
+          message={erro}
+          onClose={() => setErro("")}
+        />
+      )}
       {sucesso && (
         <FeedbackModal
           title="Concluído"

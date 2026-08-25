@@ -18,9 +18,15 @@ export function UsuarioNovaForm({
 }) {
   const formRef = useRef<HTMLFormElement>(null);
   const [sucesso, setSucesso] = useState("");
+  const [erro, setErro] = useState("");
 
   async function cadastrar(formData: FormData) {
-    await createUser(formData);
+    setErro("");
+    const result = await createUser(formData);
+    if (!result.ok) {
+      setErro(result.error);
+      return;
+    }
     formRef.current?.reset();
     setSucesso("Usuário cadastrado.");
   }
@@ -38,7 +44,7 @@ export function UsuarioNovaForm({
         </div>
         <div className="space-y-2">
           <Label htmlFor="password">Senha</Label>
-          <Input id="password" name="password" type="password" required />
+          <Input id="password" name="password" type="password" required minLength={5} />
         </div>
         <div className="space-y-2">
           <Label htmlFor="role">Perfil</Label>
@@ -77,6 +83,9 @@ export function UsuarioNovaForm({
             ))}
           </select>
         </div>
+        {erro && (
+          <p className="text-sm text-red-700 md:col-span-3">{erro}</p>
+        )}
         <div className="flex items-end md:col-span-3">
           <Button type="submit">Cadastrar</Button>
         </div>

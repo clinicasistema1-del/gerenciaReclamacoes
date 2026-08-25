@@ -64,34 +64,61 @@ export async function deleteClinic(id: string) {
 
 export async function createUser(formData: FormData) {
   await requireAdmin();
-  const password = String(formData.get("password"));
-  const hashed = await hashPassword(password);
-  const email = String(formData.get("email")).toLowerCase();
-  const name = String(formData.get("name"));
-  const role = String(formData.get("role")) as Role;
+  const password = String(formData.get("password") || "");
+  const email = String(formData.get("email") || "")
+    .trim()
+    .toLowerCase();
+  const name = String(formData.get("name") || "").trim();
+  const role = String(formData.get("role") || "PADRAO") as Role;
   const cargoRaw = String(formData.get("cargo") || "");
   const cargo = cargoRaw ? (cargoRaw as Cargo) : null;
   const clinicId = String(formData.get("clinicId") || "") || null;
 
-  const user = await prisma.user.create({
-    data: {
-      name,
-      email,
-      role,
-      cargo,
-      clinicId,
-      emailVerified: true,
-    },
-  });
+  if (!name || !email || !password) {
+    return { ok: false as const, error: "Preencha nome, e-mail e senha." };
+  }
+  if (password.length < 5) {
+    return {
+      ok: false as const,
+      error: "A senha deve ter pelo menos 5 caracteres.",
+    };
+  }
+  if (role !== "ADMIN" && role !== "PADRAO") {
+    return { ok: false as const, error: "Perfil inválido." };
+  }
 
-  await prisma.account.create({
-    data: {
-      userId: user.id,
-      accountId: user.id,
-      providerId: "credential",
-      password: hashed,
-    },
-  });
+  const existente = await prisma.user.findUnique({ where: { email } });
+  if (existente) {
+    return { ok: false as const, error: "Já existe um usuário com este e-mail." };
+  }
+
+  try {
+    const hashed = await hashPassword(password);
+    const user = await prisma.user.create({
+      data: {
+        name,
+        email,
+        role,
+        cargo,
+        clinicId,
+        emailVerified: true,
+      },
+    });
+
+    await prisma.account.create({
+      data: {
+        userId: user.id,
+        accountId: user.id,
+        providerId: "credential",
+        password: hashed,
+      },
+    });
+  } catch {
+    return {
+      ok: false as const,
+      error: "Não foi possível cadastrar o usuário. Tente novamente.",
+    };
+  }
 
   revalidatePath("/admin/usuarios");
   return { ok: true as const };

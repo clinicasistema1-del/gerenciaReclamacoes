@@ -44,6 +44,7 @@ export const statusLabels: Record<string, string> = {
   EM_ANDAMENTO: "Em andamento",
   ATRASADA: "Atrasada",
   AGUARDANDO_PARECER: "Aguardando parecer",
+  VINCULADA_TRATAMENTO: "Vinculada a um tratamento",
   CONCLUIDA: "Concluída",
   ENCERRADA: "Encerrada",
 };
@@ -53,6 +54,7 @@ export const statusColors: Record<string, string> = {
   EM_ANDAMENTO: "bg-amber-100 text-amber-800",
   ATRASADA: "bg-red-100 text-red-800",
   AGUARDANDO_PARECER: "bg-violet-100 text-violet-800",
+  VINCULADA_TRATAMENTO: "bg-teal-100 text-teal-800",
   CONCLUIDA: "bg-emerald-100 text-emerald-800",
   ENCERRADA: "bg-slate-100 text-slate-700",
 };

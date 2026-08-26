@@ -45,7 +45,7 @@ export function EncerrarReclamacaoButton({
           className="w-full"
           onClick={() =>
             setErro(
-              "Não é possível encerrar a reclamação com tratamento em andamento. Finalize o tratamento antes."
+              "Não é possível encerrar a reclamação vinculada a um tratamento. Finalize o tratamento antes."
             )
           }
         >

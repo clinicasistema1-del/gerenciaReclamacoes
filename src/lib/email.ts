@@ -75,6 +75,38 @@ function blocoDescricao(descricao: string) {
   `;
 }
 
+export async function sendEtapaEntradaEmail(params: {
+  to: string;
+  reclamacaoId: string;
+  protocolo: string;
+  pacienteNome: string;
+  clinica: string;
+  etapa: string;
+  prazoEm: Date;
+  descricao: string;
+  responsavelAtendimento: string;
+}) {
+  const { appUrl } = emailMeta();
+  const subject = `[GRC] Protocolo ${params.protocolo} — ${params.etapa}`;
+  const html = `
+    <div style="font-family: Arial, sans-serif; color: #111; line-height: 1.5;">
+      <p>Olá,</p>
+      <p>O protocolo <strong>${params.protocolo}</strong> entrou na etapa <strong>${params.etapa}</strong> e aguarda sua atuação.</p>
+      <ul>
+        <li><strong>Paciente:</strong> ${params.pacienteNome}</li>
+        <li><strong>Clínica:</strong> ${params.clinica}</li>
+        <li><strong>Responsável pelo atendimento:</strong> ${params.responsavelAtendimento}</li>
+        <li><strong>Prazo para atuação:</strong> ${formatPrazo(params.prazoEm)}</li>
+      </ul>
+      ${blocoDescricao(params.descricao)}
+      ${botaoAbrir(appUrl, params.reclamacaoId)}
+      ${rodape()}
+    </div>
+  `;
+
+  return sendMail({ to: params.to, subject, html });
+}
+
 export async function sendSlaEmail(params: {
   to: string;
   protocolo: string;

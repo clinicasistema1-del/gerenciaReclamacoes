@@ -28,6 +28,8 @@ const historicoAcaoLabels: Record<string, string> = {
   AVANCO_ETAPA: "Avanço de etapa",
   ETAPA_FINAL: "Etapa final",
   MARCADA_ATRASADA: "Marcada como atrasada",
+  VINCULO_TRATAMENTO: "Vínculo com tratamento",
+  RETORNO_ESTEIRA: "Retorno à esteira",
 };
 
 export default async function ReclamacaoDetalhePage({
@@ -73,7 +75,7 @@ export default async function ReclamacaoDetalhePage({
   if (!item) notFound();
 
   const tratamento = item.tratamentos[0] ?? null;
-  const tratamentoAberto = tratamento?.status === "EM_ANDAMENTO";
+  const tratamentoAberto = item.status === "VINCULADA_TRATAMENTO";
 
   const jaEncerrada =
     Boolean(item.nps) ||

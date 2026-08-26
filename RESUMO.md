@@ -110,9 +110,11 @@ Abertura → SAC → Coordenação → Gerência → Auditoria → Parecer admin
 
 Quando o prazo da etapa vence:
 
-1. o cron marca o protocolo como **Atrasada**;
-2. dispara e-mail (Resend) para o perfil alvo da etapa (e Admin);
-3. registra o envio em `EscalonamentoLog` para não repetir o mesmo aviso.
+1. o cron avança para a próxima etapa (ou vai para **Aguardando parecer** na última);
+2. ao entrar em cada etapa, dispara e-mail para o responsável da etapa com `emailAviso` e só então inicia o `prazoEm` (`agora + prazoDias`);
+3. registra o envio em `EscalonamentoLog`.
+
+Na última etapa, o protocolo vai para **Aguardando parecer** com o mesmo e-mail de entrada e o cron continua reenviando lembrete de atraso nesse intervalo, sem avançar de etapa.
 
 Sem `RESEND_API_KEY`, o e-mail é apenas logado no console (modo desenvolvimento).
 

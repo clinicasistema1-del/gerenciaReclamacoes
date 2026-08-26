@@ -113,10 +113,17 @@ export default async function AgendaPage() {
     responsavel: { select: { name: true } },
   } as const;
 
+  const statusAbertos = [
+    "ABERTA",
+    "EM_ANDAMENTO",
+    "AGUARDANDO_PARECER",
+    "VINCULADA_TRATAMENTO",
+  ] as const;
+
   const [abertas, vencem24h, atrasadas, concluidas] = await Promise.all([
     prisma.reclamacao.findMany({
       where: {
-        status: { in: ["ABERTA", "EM_ANDAMENTO", "AGUARDANDO_PARECER"] },
+        status: { in: [...statusAbertos] },
         OR: [{ prazoEm: null }, { prazoEm: { gt: em24h } }],
       },
       include,
@@ -125,7 +132,7 @@ export default async function AgendaPage() {
     }),
     prisma.reclamacao.findMany({
       where: {
-        status: { in: ["ABERTA", "EM_ANDAMENTO", "AGUARDANDO_PARECER"] },
+        status: { in: [...statusAbertos] },
         prazoEm: { gte: agora, lte: em24h },
       },
       include,
@@ -137,7 +144,7 @@ export default async function AgendaPage() {
         OR: [
           { status: "ATRASADA" },
           {
-            status: { in: ["ABERTA", "EM_ANDAMENTO", "AGUARDANDO_PARECER"] },
+            status: { in: [...statusAbertos] },
             prazoEm: { lt: agora },
           },
         ],

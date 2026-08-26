@@ -14,15 +14,13 @@ import {
   type ActionResultWithId,
 } from "@/lib/action-result";
 import {
-  avancarEtapa,
   calcularPrazo,
+  calcularPrazoTratamento,
+  entradaNaEtapa,
   gerarProtocolo,
   primeiraEtapa,
 } from "@/lib/reclamacao";
-import {
-  sendReclamacaoAbertaEmail,
-  sendReclamacaoEncerradaEmail,
-} from "@/lib/email";
+import { sendReclamacaoAbertaEmail, sendReclamacaoEncerradaEmail } from "@/lib/email";
 import type {
   CanalOrigem,
   Cargo,
@@ -337,7 +335,7 @@ export async function createReclamacao(
         etapaId: etapa?.id,
         responsavelId,
         criadoPorId: session.user.id,
-        prazoEm: calcularPrazo(etapa),
+        prazoEm: null,
         status: "ABERTA",
         historicos: {
           create: {
@@ -355,6 +353,18 @@ export async function createReclamacao(
       },
     });
 
+    let prazoEm: Date | null = null;
+
+    if (etapa) {
+      const entrada = await entradaNaEtapa(reclamacao.id, etapa).catch(
+        (error) => {
+          console.error("[email:entrada-etapa]", error);
+          return { prazoEm: null, enviado: false };
+        }
+      );
+      prazoEm = entrada.prazoEm;
+    }
+
     const destinatario =
       reclamacao.responsavel?.email || reclamacao.criadoPor.email;
     const nomeResponsavel =
@@ -368,7 +378,7 @@ export async function createReclamacao(
         pacienteNome: reclamacao.pacienteNome,
         clinica: reclamacao.clinic.name,
         etapa: reclamacao.etapa?.nome ?? null,
-        prazoEm: reclamacao.prazoEm,
+        prazoEm,
         descricao: reclamacao.descricao,
         responsavelAtendimento: nomeResponsavel,
       }).catch((error) => console.error("[email:abertura]", error));
@@ -430,12 +440,13 @@ export async function encerrarReclamacao(
     return actionFail("Informe o parecer final.");
   }
 
-  const tratamentoAberto = await prisma.tratamento.findFirst({
-    where: { reclamacaoId: id, status: "EM_ANDAMENTO" },
+  const reclamacao = await prisma.reclamacao.findUnique({
+    where: { id },
+    select: { status: true },
   });
-  if (tratamentoAberto) {
+  if (reclamacao?.status === "VINCULADA_TRATAMENTO") {
     return actionFail(
-      "Não é possível encerrar a reclamação com tratamento em andamento. Finalize o tratamento antes."
+      "Não é possível encerrar a reclamação vinculada a um tratamento. Finalize o tratamento antes."
     );
   }
 
@@ -507,38 +518,6 @@ export async function encerrarReclamacao(
   redirect(`/reclamacoes/${id}`);
 }
 
-export async function updateReclamacaoStatus(
-  formData: FormData
-): Promise<ActionResult> {
-  return runAction(async () => {
-    const session = await requireSession();
-    const id = String(formData.get("id"));
-    const acao = String(formData.get("acao"));
-
-    if (acao === "avancar") {
-      await avancarEtapa(id, session.user.id);
-    } else if (acao === "atribuir") {
-      await prisma.reclamacao.update({
-        where: { id },
-        data: {
-          responsavelId: String(formData.get("responsavelId")),
-          historicos: {
-            create: {
-              usuarioId: session.user.id,
-              acao: "ATRIBUICAO",
-              detalhe: "Responsável atualizado",
-            },
-          },
-        },
-      });
-    }
-
-    revalidatePath(`/reclamacoes/${id}`);
-    revalidatePath("/reclamacoes");
-    revalidatePath("/agenda");
-  }, "Não foi possível atualizar a reclamação.");
-}
-
 export async function createTratamento(
   formData: FormData
 ): Promise<ActionResultWithId> {
@@ -568,27 +547,48 @@ export async function createTratamento(
       return actionFail("Informe uma data válida para o próximo tratamento.");
     }
 
-    const tratamento = await prisma.tratamento.create({
-      data: {
-        reclamacaoId,
-        clinicId,
-        descricao,
-        responsavelId,
-        dataProxima,
-        status: "EM_ANDAMENTO",
-        historicos: {
-          create: {
-            usuarioId: session.user.id,
-            acao: "ABERTURA",
-            detalhe: "Tratamento vinculado à reclamação",
+    const tratamento = await prisma.$transaction(async (tx) => {
+      const criado = await tx.tratamento.create({
+        data: {
+          reclamacaoId,
+          clinicId,
+          descricao,
+          responsavelId,
+          dataProxima,
+          status: "EM_ANDAMENTO",
+          historicos: {
+            create: {
+              usuarioId: session.user.id,
+              acao: "ABERTURA",
+              detalhe: "Tratamento vinculado à reclamação",
+            },
           },
         },
-      },
+      });
+
+      await tx.reclamacao.update({
+        where: { id: reclamacaoId },
+        data: {
+          status: "VINCULADA_TRATAMENTO",
+          prazoEm: calcularPrazoTratamento(dataProxima),
+          atrasadaEm: null,
+          historicos: {
+            create: {
+              usuarioId: session.user.id,
+              acao: "VINCULO_TRATAMENTO",
+              detalhe: "Reclamação vinculada a um tratamento em andamento",
+            },
+          },
+        },
+      });
+
+      return criado;
     });
 
     revalidatePath("/tratamentos");
     revalidatePath(`/tratamentos/${tratamento.id}`);
     revalidatePath(`/reclamacoes/${reclamacaoId}`);
+    revalidatePath("/agenda");
     return actionOkId(tratamento.id);
   } catch (error) {
     console.error(error);
@@ -640,9 +640,21 @@ export async function adicionarEvolucaoTratamento(
         },
       },
     });
+
+    if (dataProxima) {
+      await prisma.reclamacao.update({
+        where: { id: tratamento.reclamacaoId },
+        data: {
+          prazoEm: calcularPrazoTratamento(dataProxima),
+          atrasadaEm: null,
+        },
+      });
+    }
+
     revalidatePath(`/tratamentos/${id}`);
     revalidatePath("/tratamentos");
     revalidatePath(`/reclamacoes/${tratamento.reclamacaoId}`);
+    revalidatePath("/agenda");
   }, "Não foi possível salvar a evolução do tratamento.");
 
   if (!result.ok) return result;
@@ -669,23 +681,70 @@ export async function finalizarTratamento(
   }
 
   const result = await runAction(async () => {
-    await prisma.tratamento.update({
-      where: { id },
-      data: {
-        status: "CONCLUIDO",
-        finalizadoEm: new Date(),
-        historicos: {
-          create: {
-            usuarioId: session.user.id,
-            acao: "FINALIZACAO",
-            detalhe: parecer,
+    await prisma.$transaction(async (tx) => {
+      const reclamacao = await tx.reclamacao.findUnique({
+        where: { id: tratamento.reclamacaoId },
+        include: { etapa: true },
+      });
+
+      await tx.tratamento.update({
+        where: { id },
+        data: {
+          status: "CONCLUIDO",
+          finalizadoEm: new Date(),
+          historicos: {
+            create: {
+              usuarioId: session.user.id,
+              acao: "FINALIZACAO",
+              detalhe: parecer,
+            },
           },
         },
-      },
+      });
+
+      if (
+        reclamacao &&
+        reclamacao.status !== "ENCERRADA" &&
+        reclamacao.status !== "CONCLUIDA"
+      ) {
+        await tx.reclamacao.update({
+          where: { id: reclamacao.id },
+          data: {
+            status: "EM_ANDAMENTO",
+            atrasadaEm: null,
+            historicos: {
+              create: {
+                usuarioId: session.user.id,
+                acao: "RETORNO_ESTEIRA",
+                detalhe:
+                  "Tratamento finalizado. Reclamação retomou o fluxo da esteira",
+              },
+            },
+          },
+        });
+      }
     });
+
+    const reclamacaoRetorno = await prisma.reclamacao.findUnique({
+      where: { id: tratamento.reclamacaoId },
+      include: { etapa: { include: { usuario: true } } },
+    });
+
+    if (
+      reclamacaoRetorno?.etapa &&
+      reclamacaoRetorno.status === "EM_ANDAMENTO"
+    ) {
+      await entradaNaEtapa(reclamacaoRetorno.id, reclamacaoRetorno.etapa, {
+        usuarioId: session.user.id,
+        historicoAcao: "ENTRADA_ETAPA",
+        historicoDetalhe: "Prazo reiniciado após retorno do tratamento",
+      }).catch((error) => console.error("[email:entrada-etapa]", error));
+    }
+
     revalidatePath(`/tratamentos/${id}`);
     revalidatePath("/tratamentos");
     revalidatePath(`/reclamacoes/${tratamento.reclamacaoId}`);
+    revalidatePath("/agenda");
   }, "Não foi possível finalizar o tratamento.");
 
   if (!result.ok) return result;

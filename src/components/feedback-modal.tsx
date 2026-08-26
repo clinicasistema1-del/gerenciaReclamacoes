@@ -14,6 +14,7 @@ export function variantFromMessage(message: string): FeedbackVariant {
     texto.startsWith("a senha") ||
     texto.startsWith("selecione") ||
     texto.startsWith("responsável pelo atendimento") ||
+    texto.includes("vinculada a um tratamento") ||
     texto.includes("tratamento em andamento") ||
     texto.includes("não é possível encerrar") ||
     texto.startsWith("perfil inválido") ||

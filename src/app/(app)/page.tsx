@@ -17,12 +17,29 @@ export default async function HomePage() {
 
   const [abertas, atrasadas, vencem24h, concluidasSemana] = await Promise.all([
     prisma.reclamacao.count({
-      where: { status: { in: ["ABERTA", "EM_ANDAMENTO", "AGUARDANDO_PARECER"] } },
+      where: {
+        status: {
+          in: [
+            "ABERTA",
+            "EM_ANDAMENTO",
+            "AGUARDANDO_PARECER",
+            "VINCULADA_TRATAMENTO",
+          ],
+        },
+      },
     }),
     prisma.reclamacao.count({ where: { status: "ATRASADA" } }),
     prisma.reclamacao.count({
       where: {
-        status: { in: ["ABERTA", "EM_ANDAMENTO", "ATRASADA"] },
+        status: {
+          in: [
+            "ABERTA",
+            "EM_ANDAMENTO",
+            "ATRASADA",
+            "AGUARDANDO_PARECER",
+            "VINCULADA_TRATAMENTO",
+          ],
+        },
         prazoEm: {
           gte: new Date(),
           lte: new Date(Date.now() + 24 * 60 * 60 * 1000),

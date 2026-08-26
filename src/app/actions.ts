@@ -436,22 +436,53 @@ export async function encerrarReclamacao(
   const session = await requireSession();
   const id = String(formData.get("id"));
   const parecerFinal = String(formData.get("parecerFinal") || "").trim();
+  const encerrarTratamento = String(formData.get("encerrarTratamento") || "") === "1";
+
   if (!parecerFinal) {
     return actionFail("Informe o parecer final.");
   }
 
   const reclamacao = await prisma.reclamacao.findUnique({
     where: { id },
-    select: { status: true },
+    select: {
+      status: true,
+      tratamentos: {
+        where: { status: "EM_ANDAMENTO" },
+        select: { id: true },
+        take: 1,
+      },
+    },
   });
-  if (reclamacao?.status === "VINCULADA_TRATAMENTO") {
+
+  const tratamentoAberto = reclamacao?.tratamentos[0] ?? null;
+
+  if (tratamentoAberto && !encerrarTratamento) {
     return actionFail(
-      "Não é possível encerrar a reclamação vinculada a um tratamento. Finalize o tratamento antes."
+      "Esta reclamação possui um tratamento em aberto. Confirme o encerramento conjunto para continuar."
     );
   }
 
   const result = await runAction(async () => {
     await prisma.$transaction(async (tx) => {
+      if (tratamentoAberto) {
+        await tx.tratamento.update({
+          where: { id: tratamentoAberto.id },
+          data: {
+            status: "CONCLUIDO",
+            finalizadoEm: new Date(),
+            historicos: {
+              create: {
+                usuarioId: session.user.id,
+                acao: "FINALIZACAO",
+                detalhe:
+                  "Tratamento encerrado junto com a reclamação. Parecer: " +
+                  parecerFinal,
+              },
+            },
+          },
+        });
+      }
+
       await tx.reclamacao.update({
         where: { id },
         data: {
@@ -463,7 +494,9 @@ export async function encerrarReclamacao(
             create: {
               usuarioId: session.user.id,
               acao: "ENCERRAMENTO",
-              detalhe: "Reclamação encerrada com parecer final e NPS gerado",
+              detalhe: tratamentoAberto
+                ? "Reclamação e tratamento encerrados com parecer final e NPS gerado"
+                : "Reclamação encerrada com parecer final e NPS gerado",
             },
           },
         },
@@ -479,7 +512,7 @@ export async function encerrarReclamacao(
       }
     });
 
-    const reclamacao = await prisma.reclamacao.findUnique({
+    const reclamacaoAtualizada = await prisma.reclamacao.findUnique({
       where: { id },
       include: {
         clinic: true,
@@ -488,20 +521,22 @@ export async function encerrarReclamacao(
       },
     });
 
-    if (reclamacao) {
+    if (reclamacaoAtualizada) {
       const destinatario =
-        reclamacao.responsavel?.email || reclamacao.criadoPor.email;
+        reclamacaoAtualizada.responsavel?.email ||
+        reclamacaoAtualizada.criadoPor.email;
       const nomeResponsavel =
-        reclamacao.responsavel?.name || reclamacao.criadoPor.name;
+        reclamacaoAtualizada.responsavel?.name ||
+        reclamacaoAtualizada.criadoPor.name;
 
       if (destinatario) {
         await sendReclamacaoEncerradaEmail({
           to: destinatario,
-          reclamacaoId: reclamacao.id,
-          protocolo: reclamacao.protocolo,
-          pacienteNome: reclamacao.pacienteNome,
-          clinica: reclamacao.clinic.name,
-          descricao: reclamacao.descricao,
+          reclamacaoId: reclamacaoAtualizada.id,
+          protocolo: reclamacaoAtualizada.protocolo,
+          pacienteNome: reclamacaoAtualizada.pacienteNome,
+          clinica: reclamacaoAtualizada.clinic.name,
+          descricao: reclamacaoAtualizada.descricao,
           parecerFinal,
           responsavelAtendimento: nomeResponsavel,
         }).catch((error) => console.error("[email:encerramento]", error));
@@ -512,6 +547,10 @@ export async function encerrarReclamacao(
     revalidatePath("/reclamacoes");
     revalidatePath("/agenda");
     revalidatePath("/nps");
+    revalidatePath("/tratamentos");
+    if (tratamentoAberto) {
+      revalidatePath(`/tratamentos/${tratamentoAberto.id}`);
+    }
   }, "Não foi possível encerrar a reclamação.");
 
   if (!result.ok) return result;

@@ -19,8 +19,22 @@ export function EncerrarReclamacaoButton({
   jaEncerrada: boolean;
   tratamentoAberto?: boolean;
 }) {
-  const [aberto, setAberto] = useState(false);
+  const [confirmacaoTratamento, setConfirmacaoTratamento] = useState(false);
+  const [formulario, setFormulario] = useState(false);
   const [erro, setErro] = useState("");
+
+  function abrirFluxo() {
+    if (tratamentoAberto) {
+      setConfirmacaoTratamento(true);
+      return;
+    }
+    setFormulario(true);
+  }
+
+  function confirmarTratamento() {
+    setConfirmacaoTratamento(false);
+    setFormulario(true);
+  }
 
   async function enviar(formData: FormData) {
     const result = await encerrarReclamacao(formData);
@@ -37,48 +51,56 @@ export function EncerrarReclamacaoButton({
     );
   }
 
-  if (tratamentoAberto) {
-    return (
-      <>
-        <Button
-          type="button"
-          className="w-full"
-          onClick={() =>
-            setErro(
-              "Não é possível encerrar a reclamação vinculada a um tratamento. Finalize o tratamento antes."
-            )
-          }
-        >
-          Encerrar reclamação
-        </Button>
-        {erro && (
-          <FeedbackModal
-            variant="warning"
-            title="Atenção"
-            message={erro}
-            onClose={() => setErro("")}
-          />
-        )}
-      </>
-    );
-  }
-
   return (
     <>
-      <Button type="button" className="w-full" onClick={() => setAberto(true)}>
+      <Button type="button" className="w-full" onClick={abrirFluxo}>
         Encerrar reclamação
       </Button>
 
-      {aberto && (
+      {confirmacaoTratamento && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+          <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
+            <h2 className="text-lg font-semibold">Tratamento em aberto</h2>
+            <p className="mt-2 text-sm text-[var(--muted)]">
+              Esta reclamação possui um tratamento em aberto. Se você
+              prosseguir, a reclamação e o tratamento serão encerrados juntos.
+            </p>
+            <p className="mt-2 text-sm text-[var(--muted)]">
+              Deseja continuar mesmo assim?
+            </p>
+            <div className="mt-4 flex justify-end gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setConfirmacaoTratamento(false)}
+              >
+                Cancelar
+              </Button>
+              <Button type="button" onClick={confirmarTratamento}>
+                Prosseguir
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {formulario && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
           <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
             <h2 className="text-lg font-semibold">Encerrar reclamação</h2>
             <p className="mt-2 text-sm text-[var(--muted)]">
               Informe o parecer final. Ao encerrar, a reclamação será finalizada
-              e o NPS será gerado.
+              e o NPS será gerado
+              {tratamentoAberto
+                ? ", e o tratamento em aberto também será encerrado"
+                : ""}
+              .
             </p>
             <form action={enviar} className="mt-4 space-y-4">
               <input type="hidden" name="id" value={reclamacaoId} />
+              {tratamentoAberto ? (
+                <input type="hidden" name="encerrarTratamento" value="1" />
+              ) : null}
               <div className="space-y-2">
                 <Label htmlFor="parecerFinal">Parecer final</Label>
                 <Textarea
@@ -92,7 +114,7 @@ export function EncerrarReclamacaoButton({
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => setAberto(false)}
+                  onClick={() => setFormulario(false)}
                 >
                   Cancelar
                 </Button>

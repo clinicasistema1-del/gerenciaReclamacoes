@@ -36,6 +36,8 @@ type ClinicaComparativo = {
   tratamentos: number;
 };
 
+const ALTURA_GRAFICO = 288;
+
 const CORES = [
   "#ffce00",
   "#111111",
@@ -48,12 +50,40 @@ const CORES = [
   "#333333",
 ];
 
+function ChartShell({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="w-full" style={{ height: ALTURA_GRAFICO }}>
+      <ResponsiveContainer width="100%" height={ALTURA_GRAFICO}>
+        {children}
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
 function EmptyState() {
   return (
-    <p className="flex h-full items-center justify-center text-sm text-[var(--muted)]">
+    <p
+      className="flex items-center justify-center text-sm text-[var(--muted)]"
+      style={{ height: ALTURA_GRAFICO }}
+    >
       Nenhuma ocorrência no período selecionado
     </p>
   );
+}
+
+function tooltipPct(total: number) {
+  return (value: unknown, _name: unknown, item: unknown) => {
+    const num = Number(value ?? 0);
+    const pct = total > 0 ? Math.round((num / total) * 100) : 0;
+    const nome =
+      typeof item === "object" &&
+      item !== null &&
+      "name" in item &&
+      typeof (item as { name: unknown }).name === "string"
+        ? (item as { name: string }).name
+        : "Ocorrências";
+    return [`${num} (${pct}%)`, nome];
+  };
 }
 
 function Top10Ranking({ title, data }: { title: string; data: Serie[] }) {
@@ -61,11 +91,11 @@ function Top10Ranking({ title, data }: { title: string; data: Serie[] }) {
   const max = top[0]?.value ?? 1;
 
   return (
-    <Card className="flex h-full flex-col">
+    <Card>
       <CardHeader>
         <CardTitle>{title}</CardTitle>
       </CardHeader>
-      <CardContent className="min-h-0 flex-1">
+      <CardContent>
         {top.length === 0 ? (
           <EmptyState />
         ) : (
@@ -108,43 +138,32 @@ function PieCard({ title, data }: { title: string; data: Serie[] }) {
   const total = data.reduce((acc, item) => acc + item.value, 0);
 
   return (
-    <Card className="flex h-full flex-col">
+    <Card>
       <CardHeader>
         <CardTitle>{title}</CardTitle>
       </CardHeader>
-      <CardContent className="h-72 min-h-0 flex-1">
+      <CardContent>
         {data.length === 0 ? (
           <EmptyState />
         ) : (
-          <ResponsiveContainer width="100%" height="100%">
+          <ChartShell>
             <PieChart>
               <Pie
                 data={data}
                 dataKey="value"
                 nameKey="name"
                 cx="50%"
-                cy="45%"
-                outerRadius={80}
-                label={({ name, percent }) =>
-                  `${name} (${Math.round((percent ?? 0) * 100)}%)`
-                }
-                labelLine={false}
+                cy="50%"
+                outerRadius={90}
               >
                 {data.map((_, index) => (
                   <Cell key={index} fill={CORES[index % CORES.length]} />
                 ))}
               </Pie>
-              <Tooltip
-                formatter={(value, _name, item) => {
-                  const num = Number(value ?? 0);
-                  const pct =
-                    total > 0 ? Math.round((num / total) * 100) : 0;
-                  return [`${num} (${pct}%)`, item?.name ?? "Ocorrências"];
-                }}
-              />
+              <Tooltip formatter={tooltipPct(total)} />
               <Legend />
             </PieChart>
-          </ResponsiveContainer>
+          </ChartShell>
         )}
       </CardContent>
     </Card>
@@ -153,19 +172,24 @@ function PieCard({ title, data }: { title: string; data: Serie[] }) {
 
 function AbertasVsEncerradasChart({ data }: { data: Serie[] }) {
   return (
-    <Card className="flex h-full flex-col">
+    <Card>
       <CardHeader>
         <CardTitle>Abertas vs encerradas</CardTitle>
       </CardHeader>
-      <CardContent className="h-72 min-h-0 flex-1">
+      <CardContent>
         {data.length === 0 ? (
           <EmptyState />
         ) : (
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={data} layout="vertical" margin={{ left: 20 }}>
+          <ChartShell>
+            <BarChart data={data} layout="vertical" margin={{ left: 8, right: 16 }}>
               <CartesianGrid strokeDasharray="3 3" horizontal={false} />
               <XAxis type="number" allowDecimals={false} />
-              <YAxis type="category" dataKey="name" width={90} tick={{ fontSize: 12 }} />
+              <YAxis
+                type="category"
+                dataKey="name"
+                width={96}
+                tick={{ fontSize: 12 }}
+              />
               <Tooltip />
               <Bar dataKey="value" name="Reclamações" radius={[0, 6, 6, 0]}>
                 {data.map((entry, index) => (
@@ -176,7 +200,7 @@ function AbertasVsEncerradasChart({ data }: { data: Serie[] }) {
                 ))}
               </Bar>
             </BarChart>
-          </ResponsiveContainer>
+          </ChartShell>
         )}
       </CardContent>
     </Card>
@@ -184,43 +208,47 @@ function AbertasVsEncerradasChart({ data }: { data: Serie[] }) {
 }
 
 function ClinicaComparativoChart({ data }: { data: ClinicaComparativo[] }) {
+  const altura = Math.max(ALTURA_GRAFICO, data.length * 36);
+
   return (
-    <Card className="flex h-full flex-col lg:col-span-2">
+    <Card className="lg:col-span-2">
       <CardHeader>
         <CardTitle>Reclamações e tratamentos por clínica</CardTitle>
       </CardHeader>
-      <CardContent className="h-80 min-h-0 flex-1">
+      <CardContent>
         {data.length === 0 ? (
           <EmptyState />
         ) : (
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={data} margin={{ bottom: 60 }}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} />
-              <XAxis
-                dataKey="name"
-                tick={{ fontSize: 10 }}
-                interval={0}
-                angle={-25}
-                textAnchor="end"
-                height={70}
-              />
-              <YAxis allowDecimals={false} />
-              <Tooltip />
-              <Legend />
-              <Bar
-                dataKey="reclamacoes"
-                name="Reclamações"
-                fill="#ffce00"
-                radius={[4, 4, 0, 0]}
-              />
-              <Bar
-                dataKey="tratamentos"
-                name="Tratamentos vinculados"
-                fill="#111111"
-                radius={[4, 4, 0, 0]}
-              />
-            </BarChart>
-          </ResponsiveContainer>
+          <div className="w-full" style={{ height: altura }}>
+            <ResponsiveContainer width="100%" height={altura}>
+              <BarChart data={data} margin={{ bottom: 64, left: 8, right: 8 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                <XAxis
+                  dataKey="name"
+                  tick={{ fontSize: 10 }}
+                  interval={0}
+                  angle={-30}
+                  textAnchor="end"
+                  height={72}
+                />
+                <YAxis allowDecimals={false} />
+                <Tooltip />
+                <Legend />
+                <Bar
+                  dataKey="reclamacoes"
+                  name="Reclamações"
+                  fill="#ffce00"
+                  radius={[4, 4, 0, 0]}
+                />
+                <Bar
+                  dataKey="tratamentos"
+                  name="Tratamentos vinculados"
+                  fill="#111111"
+                  radius={[4, 4, 0, 0]}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
         )}
       </CardContent>
     </Card>
@@ -229,16 +257,16 @@ function ClinicaComparativoChart({ data }: { data: ClinicaComparativo[] }) {
 
 function EvolucaoChart({ data }: { data: EvolucaoPonto[] }) {
   return (
-    <Card className="flex h-full flex-col lg:col-span-2">
+    <Card className="lg:col-span-2">
       <CardHeader>
         <CardTitle>Evolução no período</CardTitle>
       </CardHeader>
-      <CardContent className="h-72 min-h-0 flex-1">
+      <CardContent>
         {data.length === 0 ? (
           <EmptyState />
         ) : (
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={data}>
+          <ChartShell>
+            <AreaChart data={data} margin={{ left: 8, right: 8 }}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} />
               <XAxis dataKey="label" tick={{ fontSize: 11 }} />
               <YAxis allowDecimals={false} />
@@ -252,7 +280,7 @@ function EvolucaoChart({ data }: { data: EvolucaoPonto[] }) {
                 fillOpacity={0.35}
               />
             </AreaChart>
-          </ResponsiveContainer>
+          </ChartShell>
         )}
       </CardContent>
     </Card>
@@ -263,52 +291,54 @@ function StatusDonut({ data }: { data: Serie[] }) {
   const total = data.reduce((acc, item) => acc + item.value, 0);
 
   return (
-    <Card className="flex h-full flex-col">
+    <Card>
       <CardHeader>
         <CardTitle>Distribuição por status</CardTitle>
       </CardHeader>
-      <CardContent className="h-72 min-h-0 flex-1">
+      <CardContent>
         {data.length === 0 ? (
           <EmptyState />
         ) : (
-          <ResponsiveContainer width="100%" height="100%">
+          <ChartShell>
             <PieChart>
               <Pie
                 data={data}
                 dataKey="value"
                 nameKey="name"
                 cx="50%"
-                cy="45%"
-                innerRadius={45}
-                outerRadius={75}
+                cy="50%"
+                innerRadius={50}
+                outerRadius={85}
               >
                 {data.map((_, index) => (
                   <Cell key={index} fill={CORES[index % CORES.length]} />
                 ))}
               </Pie>
-              <Tooltip
-                formatter={(value, _name, item) => {
-                  const num = Number(value ?? 0);
-                  const pct =
-                    total > 0 ? Math.round((num / total) * 100) : 0;
-                  return [`${num} (${pct}%)`, item?.name ?? "Ocorrências"];
-                }}
-              />
+              <Tooltip formatter={tooltipPct(total)} />
               <Legend />
             </PieChart>
-          </ResponsiveContainer>
+          </ChartShell>
         )}
       </CardContent>
     </Card>
   );
 }
 
-function ProfissionalPorClinica({
+function ProfissionalPorClinicaChart({
   data,
 }: {
   data: ProfissionalClinica[];
 }) {
-  const max = data[0]?.ocorrencias ?? 1;
+  const top = data.slice(0, 10).map((item) => ({
+    rotulo:
+      item.clinica.length > 22
+        ? `${item.clinica.slice(0, 20)}…`
+        : item.clinica,
+    clinica: item.clinica,
+    profissional: item.profissional,
+    ocorrencias: item.ocorrencias,
+  }));
+  const altura = Math.max(ALTURA_GRAFICO, top.length * 40);
 
   return (
     <Card>
@@ -316,46 +346,48 @@ function ProfissionalPorClinica({
         <CardTitle>Profissional com mais reclamações por clínica</CardTitle>
       </CardHeader>
       <CardContent>
-        {data.length === 0 ? (
+        {top.length === 0 ? (
           <EmptyState />
         ) : (
-          <div className="max-h-96 overflow-y-auto">
-            <table className="w-full text-left text-sm">
-              <thead className="sticky top-0 bg-white text-[var(--muted)]">
-                <tr className="border-b border-[var(--border)]">
-                  <th className="px-3 py-2 font-medium">Clínica</th>
-                  <th className="px-3 py-2 font-medium">Profissional</th>
-                  <th className="px-3 py-2 font-medium">Ocorrências</th>
-                  <th className="hidden px-3 py-2 font-medium sm:table-cell">
-                    Proporção
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.map((item) => (
-                  <tr
-                    key={`${item.clinica}-${item.profissional}`}
-                    className="border-b border-[var(--border)] last:border-0"
-                  >
-                    <td className="px-3 py-2.5 font-medium">{item.clinica}</td>
-                    <td className="px-3 py-2.5">{item.profissional}</td>
-                    <td className="px-3 py-2.5 tabular-nums">{item.ocorrencias}</td>
-                    <td className="hidden px-3 py-2.5 sm:table-cell">
-                      <div className="flex items-center gap-2">
-                        <div className="h-2 flex-1 overflow-hidden rounded-full bg-[var(--surface-2)]">
-                          <div
-                            className="h-full rounded-full bg-[var(--brand)]"
-                            style={{
-                              width: `${(item.ocorrencias / max) * 100}%`,
-                            }}
-                          />
-                        </div>
+          <div className="w-full" style={{ height: altura }}>
+            <ResponsiveContainer width="100%" height={altura}>
+              <BarChart
+                data={top}
+                layout="vertical"
+                margin={{ left: 8, right: 24, top: 8, bottom: 8 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+                <XAxis type="number" allowDecimals={false} />
+                <YAxis
+                  type="category"
+                  dataKey="rotulo"
+                  width={120}
+                  tick={{ fontSize: 11 }}
+                />
+                <Tooltip
+                  content={({ active, payload }) => {
+                    if (!active || !payload?.[0]) return null;
+                    const row = payload[0].payload as (typeof top)[number];
+                    return (
+                      <div className="rounded-lg border border-[var(--border)] bg-white px-3 py-2 text-sm shadow-md">
+                        <p className="font-medium">{row.clinica}</p>
+                        <p className="text-[var(--muted)]">{row.profissional}</p>
+                        <p className="mt-1 font-semibold">
+                          {row.ocorrencias} ocorrência
+                          {row.ocorrencias !== 1 ? "s" : ""}
+                        </p>
                       </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                    );
+                  }}
+                />
+                <Bar
+                  dataKey="ocorrencias"
+                  name="Ocorrências"
+                  fill="#ffce00"
+                  radius={[0, 6, 6, 0]}
+                />
+              </BarChart>
+            </ResponsiveContainer>
           </div>
         )}
       </CardContent>
@@ -399,8 +431,14 @@ export function RelatoriosCharts({
 
       <div className="grid gap-4 lg:grid-cols-3">
         <AbertasVsEncerradasChart data={abertasVsEncerradas} />
-        <PieCard title="Reclamações com tratamento" data={reclamacoesComTratamento} />
-        <PieCard title="Tratamentos vinculados no período" data={tratamentosResumo} />
+        <PieCard
+          title="Reclamações com tratamento"
+          data={reclamacoesComTratamento}
+        />
+        <PieCard
+          title="Tratamentos vinculados no período"
+          data={tratamentosResumo}
+        />
       </div>
 
       <ClinicaComparativoChart data={clinicasComparativo} />
@@ -415,7 +453,7 @@ export function RelatoriosCharts({
         <PieCard title="Ocorrências por estado" data={estados} />
       </div>
 
-      <ProfissionalPorClinica data={profissionaisClinica} />
+      <ProfissionalPorClinicaChart data={profissionaisClinica} />
 
       <div className="grid gap-4 lg:grid-cols-2">
         <PieCard title="Canais de origem" data={canais} />

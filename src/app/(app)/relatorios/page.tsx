@@ -187,8 +187,7 @@ export default async function RelatoriosPage({
     { label: "Tempo médio (horas)", value: tempoMedio },
     { label: "Protocolos vencidos", value: vencidos },
     { label: "% encerradas", value: `${pctEncerradas}%` },
-    { label: "Tratamentos vinculados", value: tratamentos.length },
-    { label: "Reclamações c/ tratamento", value: comTratamento },
+    { label: "Tratamentos vinculados no período", value: tratamentos.length },
   ];
 
   return (
@@ -204,7 +203,7 @@ export default async function RelatoriosPage({
 
       <RelatoriosFiltros de={de} ate={ate} />
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
         {kpis.map((kpi) => (
           <Card key={kpi.label}>
             <CardHeader>

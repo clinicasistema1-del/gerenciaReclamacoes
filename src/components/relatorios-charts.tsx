@@ -134,14 +134,23 @@ function Top10Ranking({ title, data }: { title: string; data: Serie[] }) {
   );
 }
 
+function PieChartHeader({ title, total }: { title: string; total: number }) {
+  return (
+    <CardHeader className="flex flex-row items-start justify-between gap-4">
+      <CardTitle className="min-w-0">{title}</CardTitle>
+      <span className="shrink-0 font-[family-name:var(--font-display)] text-2xl tabular-nums">
+        {total}
+      </span>
+    </CardHeader>
+  );
+}
+
 function PieCard({ title, data }: { title: string; data: Serie[] }) {
   const total = data.reduce((acc, item) => acc + item.value, 0);
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>{title}</CardTitle>
-      </CardHeader>
+      <PieChartHeader title={title} total={total} />
       <CardContent>
         {data.length === 0 ? (
           <EmptyState />
@@ -292,9 +301,7 @@ function StatusDonut({ data }: { data: Serie[] }) {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Distribuição por status</CardTitle>
-      </CardHeader>
+      <PieChartHeader title="Distribuição por status" total={total} />
       <CardContent>
         {data.length === 0 ? (
           <EmptyState />

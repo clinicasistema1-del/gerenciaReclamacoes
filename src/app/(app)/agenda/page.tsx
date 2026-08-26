@@ -94,8 +94,8 @@ const colunasReclamacao: ColunaConfig[] = [
 const colunasTratamento: ColunaConfig[] = [
   {
     key: "abertos",
-    title: "Tratamentos abertos",
-    hint: "Em andamento fora do agendamento de hoje",
+    title: "Abertos no dia",
+    hint: "Vinculados hoje, independente da data do próximo",
     icon: Stethoscope,
     header: "border-teal-200 bg-teal-50",
     accent: "bg-teal-500",
@@ -104,11 +104,20 @@ const colunasTratamento: ColunaConfig[] = [
   {
     key: "hoje",
     title: "Agendados hoje",
-    hint: "Próximo retorno marcado para hoje",
+    hint: "Próximo tratamento marcado para hoje",
     icon: CalendarDays,
     header: "border-amber-200 bg-amber-50",
     accent: "bg-amber-500",
     count: "bg-amber-100 text-amber-900",
+  },
+  {
+    key: "atrasados",
+    title: "Tratamentos atrasados",
+    hint: "Próximo tratamento com data já vencida",
+    icon: AlertTriangle,
+    header: "border-red-200 bg-red-50",
+    accent: "bg-red-500",
+    count: "bg-red-100 text-red-800",
   },
   {
     key: "finalizados",
@@ -260,6 +269,7 @@ export default async function AgendaPage() {
     concluidas,
     tratamentosAbertos,
     tratamentosHoje,
+    tratamentosAtrasados,
     tratamentosFinalizados,
   ] = await Promise.all([
     prisma.reclamacao.findMany({
@@ -305,12 +315,16 @@ export default async function AgendaPage() {
     }),
     prisma.tratamento.findMany({
       where: {
+        createdAt: { gte: inicioHoje, lte: fimHoje },
+      },
+      include: includeTratamento,
+      orderBy: { createdAt: "desc" },
+      take: 50,
+    }),
+    prisma.tratamento.findMany({
+      where: {
         status: "EM_ANDAMENTO",
-        OR: [
-          { dataProxima: null },
-          { dataProxima: { lt: inicioHoje } },
-          { dataProxima: { gt: fimHoje } },
-        ],
+        dataProxima: { gte: inicioHoje, lte: fimHoje },
       },
       include: includeTratamento,
       orderBy: { dataProxima: "asc" },
@@ -319,7 +333,7 @@ export default async function AgendaPage() {
     prisma.tratamento.findMany({
       where: {
         status: "EM_ANDAMENTO",
-        dataProxima: { gte: inicioHoje, lte: fimHoje },
+        dataProxima: { lt: inicioHoje },
       },
       include: includeTratamento,
       orderBy: { dataProxima: "asc" },
@@ -346,6 +360,7 @@ export default async function AgendaPage() {
   const dadosTratamento: Record<string, ItemTratamentoAgenda[]> = {
     abertos: tratamentosAbertos,
     hoje: tratamentosHoje,
+    atrasados: tratamentosAtrasados,
     finalizados: tratamentosFinalizados,
   };
 
@@ -435,7 +450,7 @@ export default async function AgendaPage() {
             Tratamentos
           </h2>
           <p className="text-sm text-[var(--muted)]">
-            Abertos, agendados para hoje e finalizados na semana
+            Vinculados hoje, agendados, atrasados e finalizados na semana
           </p>
         </div>
 

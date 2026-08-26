@@ -9,9 +9,9 @@ export default async function AppLayout({
   const session = await requireSession();
 
   return (
-    <div className="flex min-h-screen bg-[var(--surface)]">
+    <div className="flex h-dvh overflow-hidden bg-[var(--surface)]">
       <AppSidebar userName={session.user.name} role={session.user.role} />
-      <main className="min-w-0 flex-1 overflow-y-auto">
+      <main className="min-h-0 min-w-0 flex-1 overflow-y-auto">
         <div className="mx-auto w-full max-w-[100rem] p-6 md:p-8">{children}</div>
       </main>
     </div>

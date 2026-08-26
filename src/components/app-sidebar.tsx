@@ -52,7 +52,7 @@ export function AppSidebar({
   }
 
   return (
-    <aside className="flex h-screen w-64 flex-col border-r border-[var(--border)] bg-[var(--sidebar)] text-white">
+    <aside className="flex h-dvh w-64 shrink-0 flex-col border-r border-[var(--border)] bg-[var(--sidebar)] text-white">
       <div className="flex items-center gap-3 border-b border-white/10 px-5 py-6">
         <img
           src="/logo-sorria.png"

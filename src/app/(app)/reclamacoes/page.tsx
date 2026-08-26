@@ -37,6 +37,7 @@ export default async function ReclamacoesPage({
     include: {
       clinic: true,
       criadoPor: true,
+      responsavel: true,
       etapa: true,
     },
     orderBy: { createdAt: "desc" },
@@ -109,7 +110,9 @@ export default async function ReclamacoesPage({
                   </Badge>
                 </td>
                 <td className="px-4 py-3">{formatDate(item.prazoEm)}</td>
-                <td className="px-4 py-3">{item.criadoPor.name}</td>
+                <td className="px-4 py-3">
+                  {item.responsavel?.name || item.criadoPor.name}
+                </td>
               </tr>
             ))}
             {items.length === 0 && (

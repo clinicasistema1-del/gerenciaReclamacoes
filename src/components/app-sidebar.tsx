@@ -25,7 +25,7 @@ const links = [
   { href: "/agenda", label: "Agenda GRC", icon: CalendarDays },
   { href: "/tratamentos", label: "Tratamentos", icon: HeartPulse },
   { href: "/relatorios", label: "Relatórios", icon: BarChart3 },
-  { href: "/nps", label: "Gestão de NPS", icon: QrCode },
+  { href: "/nps", label: "Avaliações", icon: QrCode },
 ];
 
 const adminLinks = [

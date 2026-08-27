@@ -33,9 +33,11 @@ function ultimos30DiasIso() {
 export function RelatoriosFiltros({
   de,
   ate,
+  basePath = "/relatorios",
 }: {
   de: string;
   ate: string;
+  basePath?: string;
 }) {
   const mesAtual = { de: inicioMesAtualSaoPaulo(), ate: hojeIsoSaoPaulo() };
   const mesAnt = mesAnteriorIso();
@@ -78,17 +80,17 @@ export function RelatoriosFiltros({
         </form>
         <div className="flex flex-wrap gap-2">
           <Button variant="outline" size="sm" asChild>
-            <Link href={`/relatorios?de=${mesAtual.de}&ate=${mesAtual.ate}`}>
+            <Link href={`${basePath}?de=${mesAtual.de}&ate=${mesAtual.ate}`}>
               Mês atual
             </Link>
           </Button>
           <Button variant="outline" size="sm" asChild>
-            <Link href={`/relatorios?de=${mesAnt.de}&ate=${mesAnt.ate}`}>
+            <Link href={`${basePath}?de=${mesAnt.de}&ate=${mesAnt.ate}`}>
               Mês anterior
             </Link>
           </Button>
           <Button variant="outline" size="sm" asChild>
-            <Link href={`/relatorios?de=${ultimos30.de}&ate=${ultimos30.ate}`}>
+            <Link href={`${basePath}?de=${ultimos30.de}&ate=${ultimos30.ate}`}>
               Últimos 30 dias
             </Link>
           </Button>

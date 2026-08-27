@@ -133,24 +133,17 @@ export function UsuariosLista({
                     </Badge>
                   </td>
                   <td className="px-4 py-3">
-                    <div className="flex items-center gap-2">
-                      <Button variant="outline" size="sm" asChild>
-                        <Link href={`/admin/usuarios/${usuario.id}`}>
-                          Detalhes
-                        </Link>
-                      </Button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setErro("");
-                          setExcluindo(usuario);
-                        }}
-                        className="rounded-md p-2 text-[var(--muted)] hover:bg-red-50 hover:text-red-600"
-                        aria-label={`Excluir ${usuario.name}`}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setErro("");
+                        setExcluindo(usuario);
+                      }}
+                      className="rounded-md p-2 text-[var(--muted)] hover:bg-red-50 hover:text-red-600"
+                      aria-label={`Excluir ${usuario.name}`}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
                   </td>
                 </tr>
               ))}

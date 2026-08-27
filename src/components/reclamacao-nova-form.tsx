@@ -12,19 +12,24 @@ import {
   FeedbackModal,
   variantFromMessage,
 } from "@/components/feedback-modal";
-import { canalLabels, motivoLabels, prioridadeLabels } from "@/lib/labels";
+import { canalLabels, prioridadeLabels } from "@/lib/labels";
 
 export function ReclamacaoNovaForm({
   clinicas,
   usuarios,
+  motivos,
+  servicos,
 }: {
   clinicas: { id: string; name: string; city: string; state: string }[];
   usuarios: { id: string; name: string }[];
+  motivos: { id: string; descricao: string }[];
+  servicos: { id: string; descricao: string }[];
 }) {
   const router = useRouter();
   const [clinicId, setClinicId] = useState("");
   const [canal, setCanal] = useState("WHATSAPP");
-  const [motivo, setMotivo] = useState("ATENDIMENTO");
+  const [motivoId, setMotivoId] = useState(motivos[0]?.id || "");
+  const [servicoId, setServicoId] = useState("");
   const [prioridade, setPrioridade] = useState("MEDIA");
   const [responsavelId, setResponsavelId] = useState("");
   const [erro, setErro] = useState("");
@@ -80,23 +85,33 @@ export function ReclamacaoNovaForm({
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="motivo">Motivo</Label>
+          <Label htmlFor="motivoId">Motivo</Label>
           <SearchableSelect
-            id="motivo"
-            name="motivo"
+            id="motivoId"
+            name="motivoId"
             required
-            value={motivo}
+            value={motivoId}
             placeholder="Selecione ou pesquise o motivo"
-            options={Object.entries(motivoLabels).map(([k, v]) => ({
-              value: k,
-              label: v,
+            options={motivos.map((m) => ({
+              value: m.id,
+              label: m.descricao,
             }))}
-            onChange={setMotivo}
+            onChange={setMotivoId}
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="servico">Serviço</Label>
-          <Input id="servico" name="servico" placeholder="Implante, prótese..." />
+          <Label htmlFor="servicoId">Serviço</Label>
+          <SearchableSelect
+            id="servicoId"
+            name="servicoId"
+            value={servicoId}
+            placeholder="Selecione ou pesquise o serviço"
+            options={servicos.map((s) => ({
+              value: s.id,
+              label: s.descricao,
+            }))}
+            onChange={setServicoId}
+          />
         </div>
         <div className="space-y-2">
           <Label htmlFor="prioridade">Prioridade</Label>

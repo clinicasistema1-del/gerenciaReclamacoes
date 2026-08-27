@@ -7,7 +7,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ReclamacoesFiltros } from "@/components/reclamacoes-filtros";
 import {
   canalLabels,
-  motivoLabels,
   prioridadeLabels,
   statusColors,
   statusLabels,
@@ -39,6 +38,7 @@ export default async function ReclamacoesPage({
       criadoPor: true,
       responsavel: true,
       etapa: true,
+      motivo: true,
     },
     orderBy: { createdAt: "desc" },
   });
@@ -98,7 +98,7 @@ export default async function ReclamacoesPage({
                   </Link>
                   <p className="text-xs text-[var(--muted)]">
                     {prioridadeLabels[item.prioridade]} ·{" "}
-                    {motivoLabels[item.motivo]}
+                    {item.motivo.descricao}
                   </p>
                 </td>
                 <td className="px-4 py-3">{item.pacienteNome}</td>

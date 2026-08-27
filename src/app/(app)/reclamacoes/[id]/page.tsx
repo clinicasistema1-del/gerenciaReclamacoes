@@ -10,7 +10,6 @@ import { NpsCompartilhar } from "@/components/nps-compartilhar";
 import { VincularTratamentoButton } from "@/components/vincular-tratamento-button";
 import {
   canalLabels,
-  motivoLabels,
   prioridadeLabels,
   statusColors,
   statusLabels,
@@ -47,6 +46,8 @@ export default async function ReclamacaoDetalhePage({
         clinic: true,
         responsavel: true,
         criadoPor: true,
+        motivo: true,
+        servico: true,
         etapa: {
           include: { usuario: true },
         },
@@ -138,11 +139,11 @@ export default async function ReclamacaoDetalhePage({
             </div>
             <div>
               <p className="text-[var(--muted)]">Motivo</p>
-              <p className="font-medium">{motivoLabels[item.motivo]}</p>
+              <p className="font-medium">{item.motivo.descricao}</p>
             </div>
             <div>
               <p className="text-[var(--muted)]">Serviço</p>
-              <p className="font-medium">{item.servico || "—"}</p>
+              <p className="font-medium">{item.servico?.descricao || "—"}</p>
             </div>
             <div>
               <p className="text-[var(--muted)]">Etapa atual</p>

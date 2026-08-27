@@ -5,12 +5,14 @@ import { ReclamacaoNovaForm } from "@/components/reclamacao-nova-form";
 
 export default async function NovaReclamacaoPage() {
   await requireSession();
-  const [clinicas, usuarios] = await Promise.all([
+  const [clinicas, usuarios, motivos, servicos] = await Promise.all([
     prisma.clinic.findMany({
       where: { active: true },
       orderBy: { name: "asc" },
     }),
     prisma.user.findMany({ where: { active: true }, orderBy: { name: "asc" } }),
+    prisma.motivo.findMany({ orderBy: { descricao: "asc" } }),
+    prisma.servico.findMany({ orderBy: { descricao: "asc" } }),
   ]);
 
   return (
@@ -37,6 +39,14 @@ export default async function NovaReclamacaoPage() {
               state: c.state,
             }))}
             usuarios={usuarios.map((u) => ({ id: u.id, name: u.name }))}
+            motivos={motivos.map((m) => ({
+              id: m.id,
+              descricao: m.descricao,
+            }))}
+            servicos={servicos.map((s) => ({
+              id: s.id,
+              descricao: s.descricao,
+            }))}
           />
         </CardContent>
       </Card>

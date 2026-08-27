@@ -32,15 +32,6 @@ enum CanalOrigem {
   OUTRO
 }
 
-enum MotivoReclamacao {
-  ATENDIMENTO
-  COBRANCA
-  QUALIDADE_TRATAMENTO
-  AGENDAMENTO
-  FINANCEIRO
-  OUTRO
-}
-
 enum Prioridade {
   BAIXA
   MEDIA
@@ -142,6 +133,22 @@ model Clinic {
   @@map("clinic")
 }
 
+model Motivo {
+  id          String       @id @default(cuid())
+  descricao   String       @unique
+  reclamacoes Reclamacao[]
+
+  @@map("motivo")
+}
+
+model Servico {
+  id          String       @id @default(cuid())
+  descricao   String       @unique
+  reclamacoes Reclamacao[]
+
+  @@map("servico")
+}
+
 model EsteiraEtapa {
   id           String   @id @default(cuid())
   nome         String
@@ -167,8 +174,10 @@ model Reclamacao {
   clinicId        String
   clinic          Clinic            @relation(fields: [clinicId], references: [id])
   canal           CanalOrigem
-  motivo          MotivoReclamacao
-  servico         String?
+  motivoId        String
+  motivo          Motivo            @relation(fields: [motivoId], references: [id])
+  servicoId       String?
+  servico         Servico?          @relation(fields: [servicoId], references: [id])
   prioridade      Prioridade        @default(MEDIA)
   descricao       String
   status          StatusReclamacao  @default(ABERTA)
@@ -194,6 +203,8 @@ model Reclamacao {
   @@index([clinicId])
   @@index([responsavelId])
   @@index([prazoEm])
+  @@index([motivoId])
+  @@index([servicoId])
   @@map("reclamacao")
 }
 

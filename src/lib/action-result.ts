@@ -48,6 +48,9 @@ export function mapPrismaError(
     if (campos.includes("protocolo")) {
       return "Já existe uma reclamação com este protocolo.";
     }
+    if (campos.includes("descricao")) {
+      return "Já existe um cadastro com esta descrição.";
+    }
     return "Já existe um registro com esses dados.";
   }
 

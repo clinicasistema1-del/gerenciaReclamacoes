@@ -13,6 +13,7 @@ import {
   Home,
   LogOut,
   QrCode,
+  SlidersHorizontal,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { authClient } from "@/lib/auth-client";
@@ -32,6 +33,7 @@ const adminLinks = [
   { href: "/admin/usuarios", label: "Usuários", icon: Users },
   { href: "/admin/clinicas", label: "Clínicas", icon: Building2 },
   { href: "/admin/esteira", label: "Esteira", icon: GitBranch },
+  { href: "/admin/customizacao", label: "Customização", icon: SlidersHorizontal },
 ];
 
 export function AppSidebar({

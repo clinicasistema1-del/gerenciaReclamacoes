@@ -3,7 +3,7 @@ import { requireSession } from "@/lib/session";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RelatoriosCharts } from "@/components/relatorios-charts";
 import { RelatoriosFiltros } from "@/components/relatorios-filtros";
-import { canalLabels, motivoLabels, statusLabels } from "@/lib/labels";
+import { canalLabels, prioridadeLabels, statusLabels } from "@/lib/labels";
 import {
   agruparComOutros,
   formatDateShort,
@@ -48,6 +48,7 @@ export default async function RelatoriosPage({
     include: {
       clinic: true,
       responsavel: true,
+      motivo: true,
       tratamentos: { select: { id: true } },
     },
     orderBy: { createdAt: "asc" },
@@ -110,7 +111,7 @@ export default async function RelatoriosPage({
     );
     const canal = canalLabels[r.canal] || r.canal;
     porCanalMap.set(canal, (porCanalMap.get(canal) || 0) + 1);
-    const motivo = motivoLabels[r.motivo] || r.motivo;
+    const motivo = r.motivo.descricao;
     porMotivoMap.set(motivo, (porMotivoMap.get(motivo) || 0) + 1);
     const status = statusLabels[r.status] || r.status;
     porStatusMap.set(status, (porStatusMap.get(status) || 0) + 1);

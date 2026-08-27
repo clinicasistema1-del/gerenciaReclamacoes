@@ -153,6 +153,37 @@ async function main() {
     });
   }
 
+  const motivos = [
+    { id: "ATENDIMENTO", descricao: "Atendimento" },
+    { id: "COBRANCA", descricao: "Cobrança" },
+    { id: "QUALIDADE_TRATAMENTO", descricao: "Qualidade do tratamento" },
+    { id: "AGENDAMENTO", descricao: "Agendamento" },
+    { id: "FINANCEIRO", descricao: "Financeiro" },
+    { id: "OUTRO", descricao: "Outro" },
+  ];
+
+  for (const motivo of motivos) {
+    await prisma.motivo.upsert({
+      where: { id: motivo.id },
+      update: { descricao: motivo.descricao },
+      create: motivo,
+    });
+  }
+
+  const servicos = [
+    { id: "IMPLANTE", descricao: "Implante" },
+    { id: "RESTAURACAO", descricao: "Restauração" },
+    { id: "PROTESE", descricao: "Prótese" },
+  ];
+
+  for (const servico of servicos) {
+    await prisma.servico.upsert({
+      where: { id: servico.id },
+      update: { descricao: servico.descricao },
+      create: servico,
+    });
+  }
+
   const existing = await prisma.reclamacao.findUnique({
     where: { protocolo: "GRC-2026-000001" },
   });
@@ -165,8 +196,8 @@ async function main() {
         pacienteContato: "(64) 99999-0000",
         clinicId: clinicas[0].id,
         canal: "WHATSAPP",
-        motivo: "QUALIDADE_TRATAMENTO",
-        servico: "Implante",
+        motivoId: "QUALIDADE_TRATAMENTO",
+        servicoId: "IMPLANTE",
         prioridade: "ALTA",
         descricao:
           "Paciente reclama no WhatsApp sobre um procedimento realizado na unidade de Catalão.",

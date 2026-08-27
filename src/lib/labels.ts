@@ -23,15 +23,6 @@ export const canalLabels: Record<string, string> = {
   OUTRO: "Outro",
 };
 
-export const motivoLabels: Record<string, string> = {
-  ATENDIMENTO: "Atendimento",
-  COBRANCA: "Cobrança",
-  QUALIDADE_TRATAMENTO: "Qualidade do tratamento",
-  AGENDAMENTO: "Agendamento",
-  FINANCEIRO: "Financeiro",
-  OUTRO: "Outro",
-};
-
 export const prioridadeLabels: Record<string, string> = {
   BAIXA: "Baixa",
   MEDIA: "Média",

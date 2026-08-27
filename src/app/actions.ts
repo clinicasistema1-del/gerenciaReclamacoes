@@ -24,7 +24,6 @@ import { sendReclamacaoAbertaEmail, sendReclamacaoEncerradaEmail } from "@/lib/e
 import type {
   CanalOrigem,
   Cargo,
-  MotivoReclamacao,
   Prioridade,
   Role,
 } from "@prisma/client";
@@ -80,6 +79,105 @@ export async function deleteClinic(id: string) {
       users: 0,
       reclamacoes: 0,
       error: mapPrismaError(error, "Não foi possível excluir a clínica."),
+    };
+  }
+}
+
+function revalidateCustomizacao() {
+  revalidatePath("/admin/customizacao");
+  revalidatePath("/reclamacoes/nova");
+  revalidatePath("/reclamacoes");
+  revalidatePath("/relatorios");
+}
+
+export async function createMotivo(formData: FormData): Promise<ActionResult> {
+  await requireAdmin();
+  const descricao = String(formData.get("descricao") || "").trim();
+  if (!descricao) {
+    return actionFail("Informe a descrição do motivo.");
+  }
+  return runAction(async () => {
+    await prisma.motivo.create({ data: { descricao } });
+    revalidateCustomizacao();
+  }, "Não foi possível cadastrar o motivo.");
+}
+
+export async function updateMotivo(formData: FormData): Promise<ActionResult> {
+  await requireAdmin();
+  const id = String(formData.get("id") || "");
+  const descricao = String(formData.get("descricao") || "").trim();
+  if (!id || !descricao) {
+    return actionFail("Informe a descrição do motivo.");
+  }
+  return runAction(async () => {
+    await prisma.motivo.update({ where: { id }, data: { descricao } });
+    revalidateCustomizacao();
+  }, "Não foi possível atualizar o motivo.");
+}
+
+export async function deleteMotivo(id: string) {
+  await requireAdmin();
+  try {
+    const reclamacoes = await prisma.reclamacao.count({ where: { motivoId: id } });
+    if (reclamacoes > 0) {
+      return { ok: false as const, reclamacoes };
+    }
+    await prisma.motivo.delete({ where: { id } });
+    revalidateCustomizacao();
+    return { ok: true as const };
+  } catch (error) {
+    console.error(error);
+    return {
+      ok: false as const,
+      reclamacoes: 0,
+      error: mapPrismaError(error, "Não foi possível excluir o motivo."),
+    };
+  }
+}
+
+export async function createServico(formData: FormData): Promise<ActionResult> {
+  await requireAdmin();
+  const descricao = String(formData.get("descricao") || "").trim();
+  if (!descricao) {
+    return actionFail("Informe a descrição do serviço.");
+  }
+  return runAction(async () => {
+    await prisma.servico.create({ data: { descricao } });
+    revalidateCustomizacao();
+  }, "Não foi possível cadastrar o serviço.");
+}
+
+export async function updateServico(formData: FormData): Promise<ActionResult> {
+  await requireAdmin();
+  const id = String(formData.get("id") || "");
+  const descricao = String(formData.get("descricao") || "").trim();
+  if (!id || !descricao) {
+    return actionFail("Informe a descrição do serviço.");
+  }
+  return runAction(async () => {
+    await prisma.servico.update({ where: { id }, data: { descricao } });
+    revalidateCustomizacao();
+  }, "Não foi possível atualizar o serviço.");
+}
+
+export async function deleteServico(id: string) {
+  await requireAdmin();
+  try {
+    const reclamacoes = await prisma.reclamacao.count({
+      where: { servicoId: id },
+    });
+    if (reclamacoes > 0) {
+      return { ok: false as const, reclamacoes };
+    }
+    await prisma.servico.delete({ where: { id } });
+    revalidateCustomizacao();
+    return { ok: true as const };
+  } catch (error) {
+    console.error(error);
+    return {
+      ok: false as const,
+      reclamacoes: 0,
+      error: mapPrismaError(error, "Não foi possível excluir o serviço."),
     };
   }
 }
@@ -306,19 +404,40 @@ export async function createReclamacao(
     const descricao = String(formData.get("descricao") || "").trim();
     const responsavelId = String(formData.get("responsavelId") || "").trim();
 
+    const motivoId = String(formData.get("motivoId") || "").trim();
+    const servicoId = String(formData.get("servicoId") || "").trim();
+
     if (!pacienteNome || !clinicId || !descricao) {
       return actionFail("Preencha paciente, clínica e descrição.");
+    }
+    if (!motivoId) {
+      return actionFail("Selecione o motivo.");
     }
     if (!responsavelId) {
       return actionFail("Selecione o responsável pelo atendimento.");
     }
 
-    const responsavel = await prisma.user.findFirst({
-      where: { id: responsavelId, active: true },
-      select: { id: true },
-    });
+    const [responsavel, motivo, servico] = await Promise.all([
+      prisma.user.findFirst({
+        where: { id: responsavelId, active: true },
+        select: { id: true },
+      }),
+      prisma.motivo.findUnique({ where: { id: motivoId }, select: { id: true } }),
+      servicoId
+        ? prisma.servico.findUnique({
+            where: { id: servicoId },
+            select: { id: true },
+          })
+        : Promise.resolve(null),
+    ]);
     if (!responsavel) {
       return actionFail("Responsável pelo atendimento inválido.");
+    }
+    if (!motivo) {
+      return actionFail("Motivo inválido.");
+    }
+    if (servicoId && !servico) {
+      return actionFail("Serviço inválido.");
     }
 
     const reclamacao = await prisma.reclamacao.create({
@@ -328,8 +447,8 @@ export async function createReclamacao(
         pacienteContato: String(formData.get("pacienteContato") || "") || null,
         clinicId,
         canal: String(formData.get("canal")) as CanalOrigem,
-        motivo: String(formData.get("motivo")) as MotivoReclamacao,
-        servico: String(formData.get("servico") || "") || null,
+        motivoId,
+        servicoId: servicoId || null,
         prioridade: String(formData.get("prioridade") || "MEDIA") as Prioridade,
         descricao,
         etapaId: etapa?.id,

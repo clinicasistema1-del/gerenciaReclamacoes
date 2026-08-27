@@ -9,19 +9,21 @@ export default async function EsteiraPage() {
   const [etapas, usuarios] = await Promise.all([
     prisma.esteiraEtapa.findMany({
       orderBy: { ordem: "asc" },
-      include: { _count: { select: { reclamacoes: true } } },
+      include: {
+        usuario: true,
+        _count: { select: { reclamacoes: true } },
+      },
     }),
     prisma.user.findMany({
       where: { active: true },
       orderBy: { name: "asc" },
-      select: { id: true, name: true, email: true },
+      select: { id: true, name: true },
     }),
   ]);
 
   const usuariosOpts = usuarios.map((u) => ({
     id: u.id,
     name: u.name,
-    email: u.email,
   }));
 
   return (
@@ -48,14 +50,12 @@ export default async function EsteiraPage() {
       </Card>
 
       <EsteiraLista
-        usuarios={usuariosOpts}
         etapas={etapas.map((e) => ({
           id: e.id,
           nome: e.nome,
           ordem: e.ordem,
           prazoDias: e.prazoDias,
-          usuarioId: e.usuarioId,
-          emailAviso: e.emailAviso,
+          usuarioNome: e.usuario.name,
           active: e.active,
           reclamacoes: e._count.reclamacoes,
         }))}

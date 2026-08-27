@@ -62,11 +62,7 @@ export async function entradaNaEtapa(
           include: { usuario: true },
         });
 
-  if (
-    etapaCompleta?.emailAviso &&
-    etapaCompleta.usuario?.email &&
-    prazoEm
-  ) {
+  if (etapaCompleta?.usuario?.email && prazoEm) {
     const result = await sendEtapaEntradaEmail({
       to: etapaCompleta.usuario.email,
       reclamacaoId: reclamacao.id,
@@ -191,7 +187,7 @@ async function enviarAlertaParecer(item: {
   const agora = new Date();
   const etapaOrdem = item.etapa?.ordem ?? 1;
   const etapaAlvo = await prisma.esteiraEtapa.findFirst({
-    where: { active: true, ordem: etapaOrdem, emailAviso: true },
+    where: { active: true, ordem: etapaOrdem },
     include: { usuario: true },
   });
 

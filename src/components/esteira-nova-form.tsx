@@ -16,7 +16,7 @@ const selectClass =
 export function EsteiraNovaForm({
   usuarios,
 }: {
-  usuarios: { id: string; name: string; email: string }[];
+  usuarios: { id: string; name: string }[];
 }) {
   const formRef = useRef<HTMLFormElement>(null);
   const [sucesso, setSucesso] = useState("");
@@ -53,15 +53,11 @@ export function EsteiraNovaForm({
             <option value="">Selecione o usuário</option>
             {usuarios.map((u) => (
               <option key={u.id} value={u.id}>
-                {u.name} — {u.email}
+                {u.name}
               </option>
             ))}
           </select>
         </div>
-        <label className="flex items-end gap-2 text-sm">
-          <input type="checkbox" name="emailAviso" defaultChecked />
-          Enviar e-mail ao atrasar
-        </label>
         <label className="flex items-end gap-2 text-sm">
           <input type="checkbox" name="active" defaultChecked />
           Ativa

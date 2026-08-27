@@ -57,6 +57,7 @@ export async function updateClinic(formData: FormData): Promise<ActionResult> {
       },
     });
     revalidatePath("/admin/clinicas");
+    revalidatePath(`/admin/clinicas/${id}`);
   }, "Não foi possível atualizar a clínica.");
 }
 
@@ -366,7 +367,7 @@ export async function createEsteira(formData: FormData): Promise<ActionResult> {
         ordem,
         prazoDias: Number(formData.get("prazoDias")),
         usuarioId,
-        emailAviso: formData.get("emailAviso") === "on",
+        emailAviso: true,
         active: formData.get("active") === "on",
       },
     });
@@ -401,11 +402,12 @@ export async function updateEsteira(formData: FormData): Promise<ActionResult> {
         ordem,
         prazoDias: Number(formData.get("prazoDias")),
         usuarioId,
-        emailAviso: formData.get("emailAviso") === "on",
+        emailAviso: true,
         active: formData.get("active") === "on",
       },
     });
     revalidatePath("/admin/esteira");
+    revalidatePath(`/admin/esteira/${id}`);
   }, "Não foi possível atualizar a etapa.");
 }
 

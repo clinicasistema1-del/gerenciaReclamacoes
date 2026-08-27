@@ -6,7 +6,6 @@ import { AlertTriangle, Trash2 } from "lucide-react";
 import { deleteUser } from "@/app/actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { FeedbackModal } from "@/components/feedback-modal";
 import { cargoLabels, roleLabels } from "@/lib/labels";
 

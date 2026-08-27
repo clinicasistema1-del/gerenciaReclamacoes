@@ -35,24 +35,6 @@ export function mascaraTelefone(valor: string) {
     .replace(/(\d{5})(\d)/, "$1-$2");
 }
 
-export function cpfValido(valor: string) {
-  const cpf = somenteDigitos(valor);
-  if (cpf.length !== 11 || /^(\d)\1+$/.test(cpf)) return false;
-
-  const calc = (base: string, fator: number) => {
-    let soma = 0;
-    for (let i = 0; i < base.length; i++) {
-      soma += Number(base[i]) * (fator - i);
-    }
-    const resto = (soma * 10) % 11;
-    return resto === 10 ? 0 : resto;
-  };
-
-  const d1 = calc(cpf.slice(0, 9), 10);
-  const d2 = calc(cpf.slice(0, 10), 11);
-  return d1 === Number(cpf[9]) && d2 === Number(cpf[10]);
-}
-
 export function formatDate(date: Date | string | null | undefined) {
   if (!date) return "—";
   return new Intl.DateTimeFormat("pt-BR", {

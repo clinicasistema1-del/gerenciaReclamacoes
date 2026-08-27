@@ -55,6 +55,8 @@ model User {
   email         String    @unique
   emailVerified Boolean   @default(false)
   image         String?
+  cpf           String?
+  senhaAcesso   String?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   role          Role      @default(PADRAO)
@@ -71,6 +73,7 @@ model User {
   tratamentos            Tratamento[] @relation("ResponsavelTratamento")
   etapasEsteira          EsteiraEtapa[]
 
+  @@index([cpf])
   @@map("user")
 }
 

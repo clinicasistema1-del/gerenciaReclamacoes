@@ -27,6 +27,8 @@ export function ReclamacaoNovaForm({
   servicos: { id: string; descricao: string }[];
 }) {
   const router = useRouter();
+  const [pacienteNome, setPacienteNome] = useState("");
+  const [descricao, setDescricao] = useState("");
   const [clinicId, setClinicId] = useState("");
   const [canal, setCanal] = useState("WHATSAPP");
   const [motivoId, setMotivoId] = useState(motivos[0]?.id || "");
@@ -35,6 +37,7 @@ export function ReclamacaoNovaForm({
   const [responsavelId, setResponsavelId] = useState("");
   const [cpf, setCpf] = useState("");
   const [contato, setContato] = useState("");
+  const [enviando, setEnviando] = useState(false);
   const [erro, setErro] = useState("");
 
   const responsaveisClinica = useMemo(
@@ -47,8 +50,12 @@ export function ReclamacaoNovaForm({
     setResponsavelId("");
   }
 
-  async function cadastrar(formData: FormData) {
+  async function cadastrar(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    setEnviando(true);
     const result = await createReclamacao(formData);
+    setEnviando(false);
     if (!result.ok) {
       setErro(result.error);
       return;
@@ -58,10 +65,16 @@ export function ReclamacaoNovaForm({
 
   return (
     <>
-      <form action={cadastrar} className="grid gap-4 md:grid-cols-2">
+      <form onSubmit={cadastrar} className="grid gap-4 md:grid-cols-2">
         <div className="space-y-2 md:col-span-2">
           <Label htmlFor="pacienteNome">Nome do paciente</Label>
-          <Input id="pacienteNome" name="pacienteNome" required />
+          <Input
+            id="pacienteNome"
+            name="pacienteNome"
+            required
+            value={pacienteNome}
+            onChange={(e) => setPacienteNome(e.target.value)}
+          />
         </div>
         <div className="space-y-2">
           <Label htmlFor="pacienteCpf">CPF</Label>
@@ -184,10 +197,18 @@ export function ReclamacaoNovaForm({
         </div>
         <div className="space-y-2 md:col-span-2">
           <Label htmlFor="descricao">Descrição</Label>
-          <Textarea id="descricao" name="descricao" required />
+          <Textarea
+            id="descricao"
+            name="descricao"
+            required
+            value={descricao}
+            onChange={(e) => setDescricao(e.target.value)}
+          />
         </div>
         <div className="md:col-span-2">
-          <Button type="submit">Criar reclamação</Button>
+          <Button type="submit" disabled={enviando}>
+            {enviando ? "Criando..." : "Criar reclamação"}
+          </Button>
         </div>
       </form>
       {erro && (

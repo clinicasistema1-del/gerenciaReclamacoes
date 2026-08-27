@@ -10,6 +10,7 @@ export default async function UsuariosPage() {
     prisma.user.findMany({
       orderBy: { name: "asc" },
       include: {
+        clinic: true,
         _count: {
           select: {
             reclamacoesResponsavel: true,
@@ -53,14 +54,13 @@ export default async function UsuariosPage() {
 
       <UsuariosLista
         currentUserId={session.user.id}
-        clinicas={clinicas.map((c) => ({ id: c.id, name: c.name }))}
         usuarios={usuarios.map((u) => ({
           id: u.id,
           name: u.name,
           email: u.email,
           role: u.role,
           cargo: u.cargo,
-          clinicId: u.clinicId,
+          clinicName: u.clinic?.name || null,
           active: u.active,
           reclamacoes:
             u._count.reclamacoesResponsavel + u._count.reclamacoesCriadas,

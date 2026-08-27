@@ -44,6 +44,7 @@ async function main() {
         cargo: data.cargo ?? null,
         clinicId: data.clinicId,
         active: true,
+        senhaAcesso: data.password,
       },
       create: {
         id: data.id,
@@ -52,6 +53,7 @@ async function main() {
         role: data.role,
         cargo: data.cargo,
         clinicId: data.clinicId,
+        senhaAcesso: data.password,
         emailVerified: true,
       },
     });

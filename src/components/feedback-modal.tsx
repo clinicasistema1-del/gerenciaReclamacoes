@@ -19,8 +19,7 @@ export function variantFromMessage(message: string): FeedbackVariant {
     texto.includes("não é possível encerrar") ||
     texto.startsWith("perfil inválido") ||
     texto.includes("não é possível excluir") ||
-    texto.includes("usuário logado") ||
-    texto.includes("cpf")
+    texto.includes("usuário logado")
   ) {
     return "warning";
   }

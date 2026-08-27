@@ -21,7 +21,7 @@ import {
   primeiraEtapa,
 } from "@/lib/reclamacao";
 import { sendReclamacaoAbertaEmail, sendReclamacaoEncerradaEmail } from "@/lib/email";
-import { cpfValido, somenteDigitos } from "@/lib/utils";
+import { somenteDigitos } from "@/lib/utils";
 import type {
   CanalOrigem,
   Cargo,
@@ -190,6 +190,8 @@ export async function createUser(formData: FormData): Promise<ActionResult> {
     .trim()
     .toLowerCase();
   const name = String(formData.get("name") || "").trim();
+  const cpfRaw = String(formData.get("cpf") || "").trim();
+  const cpf = cpfRaw ? somenteDigitos(cpfRaw) : "";
   const role = String(formData.get("role") || "PADRAO") as Role;
   const cargoRaw = String(formData.get("cargo") || "");
   const cargo = cargoRaw ? (cargoRaw as Cargo) : null;
@@ -216,6 +218,8 @@ export async function createUser(formData: FormData): Promise<ActionResult> {
       data: {
         name,
         email,
+        cpf: cpf || null,
+        senhaAcesso: password,
         role,
         cargo,
         clinicId,
@@ -237,9 +241,17 @@ export async function createUser(formData: FormData): Promise<ActionResult> {
 
 export async function updateUser(formData: FormData): Promise<ActionResult> {
   await requireAdmin();
+  const id = String(formData.get("id"));
+  const cargoRaw = String(formData.get("cargo") || "");
+  const cpfRaw = String(formData.get("cpf") || "").trim();
+  const cpf = cpfRaw ? somenteDigitos(cpfRaw) : "";
+  const password = String(formData.get("password") || "");
+
+  if (password && password.length < 5) {
+    return actionFail("A senha deve ter pelo menos 5 caracteres.");
+  }
+
   return runAction(async () => {
-    const id = String(formData.get("id"));
-    const cargoRaw = String(formData.get("cargo") || "");
     await prisma.user.update({
       where: { id },
       data: {
@@ -247,10 +259,36 @@ export async function updateUser(formData: FormData): Promise<ActionResult> {
         role: String(formData.get("role")) as Role,
         cargo: cargoRaw ? (cargoRaw as Cargo) : null,
         clinicId: String(formData.get("clinicId") || "") || null,
+        cpf: cpf || null,
         active: formData.get("active") === "on",
+        ...(password ? { senhaAcesso: password } : {}),
       },
     });
+
+    if (password) {
+      const hashed = await hashPassword(password);
+      const account = await prisma.account.findFirst({
+        where: { userId: id, providerId: "credential" },
+      });
+      if (account) {
+        await prisma.account.update({
+          where: { id: account.id },
+          data: { password: hashed },
+        });
+      } else {
+        await prisma.account.create({
+          data: {
+            userId: id,
+            accountId: id,
+            providerId: "credential",
+            password: hashed,
+          },
+        });
+      }
+    }
+
     revalidatePath("/admin/usuarios");
+    revalidatePath(`/admin/usuarios/${id}`);
   }, "Não foi possível atualizar o usuário.");
 }
 
@@ -412,9 +450,6 @@ export async function createReclamacao(
 
     if (!pacienteNome || !clinicId || !descricao) {
       return actionFail("Preencha paciente, clínica e descrição.");
-    }
-    if (pacienteCpf && !cpfValido(pacienteCpf)) {
-      return actionFail("Informe um CPF válido.");
     }
     if (!motivoId) {
       return actionFail("Selecione o motivo.");

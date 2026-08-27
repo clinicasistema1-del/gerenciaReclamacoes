@@ -35,6 +35,11 @@ export const auth = betterAuth({
         required: false,
         input: true,
       },
+      cpf: {
+        type: "string",
+        required: false,
+        input: false,
+      },
       active: {
         type: "boolean",
         required: false,

@@ -170,6 +170,7 @@ model Reclamacao {
   id              String            @id @default(cuid())
   protocolo       String            @unique
   pacienteNome    String
+  pacienteCpf     String?
   pacienteContato String?
   clinicId        String
   clinic          Clinic            @relation(fields: [clinicId], references: [id])
@@ -205,6 +206,7 @@ model Reclamacao {
   @@index([prazoEm])
   @@index([motivoId])
   @@index([servicoId])
+  @@index([pacienteCpf])
   @@map("reclamacao")
 }
 

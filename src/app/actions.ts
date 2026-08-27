@@ -21,6 +21,7 @@ import {
   primeiraEtapa,
 } from "@/lib/reclamacao";
 import { sendReclamacaoAbertaEmail, sendReclamacaoEncerradaEmail } from "@/lib/email";
+import { cpfValido, somenteDigitos } from "@/lib/utils";
 import type {
   CanalOrigem,
   Cargo,
@@ -401,6 +402,8 @@ export async function createReclamacao(
     const protocolo = await gerarProtocolo();
     const clinicId = String(formData.get("clinicId") || "");
     const pacienteNome = String(formData.get("pacienteNome") || "").trim();
+    const pacienteCpfRaw = String(formData.get("pacienteCpf") || "").trim();
+    const pacienteCpf = pacienteCpfRaw ? somenteDigitos(pacienteCpfRaw) : "";
     const descricao = String(formData.get("descricao") || "").trim();
     const responsavelId = String(formData.get("responsavelId") || "").trim();
 
@@ -409,6 +412,9 @@ export async function createReclamacao(
 
     if (!pacienteNome || !clinicId || !descricao) {
       return actionFail("Preencha paciente, clínica e descrição.");
+    }
+    if (pacienteCpf && !cpfValido(pacienteCpf)) {
+      return actionFail("Informe um CPF válido.");
     }
     if (!motivoId) {
       return actionFail("Selecione o motivo.");
@@ -419,7 +425,7 @@ export async function createReclamacao(
 
     const [responsavel, motivo, servico] = await Promise.all([
       prisma.user.findFirst({
-        where: { id: responsavelId, active: true },
+        where: { id: responsavelId, active: true, clinicId },
         select: { id: true },
       }),
       prisma.motivo.findUnique({ where: { id: motivoId }, select: { id: true } }),
@@ -431,7 +437,9 @@ export async function createReclamacao(
         : Promise.resolve(null),
     ]);
     if (!responsavel) {
-      return actionFail("Responsável pelo atendimento inválido.");
+      return actionFail(
+        "Responsável pelo atendimento inválido para a clínica selecionada."
+      );
     }
     if (!motivo) {
       return actionFail("Motivo inválido.");
@@ -444,6 +452,7 @@ export async function createReclamacao(
       data: {
         protocolo,
         pacienteNome,
+        pacienteCpf: pacienteCpf || null,
         pacienteContato: String(formData.get("pacienteContato") || "") || null,
         clinicId,
         canal: String(formData.get("canal")) as CanalOrigem,

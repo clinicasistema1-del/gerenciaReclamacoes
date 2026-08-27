@@ -11,7 +11,7 @@ import {
   statusColors,
   statusLabels,
 } from "@/lib/labels";
-import { formatDate } from "@/lib/utils";
+import { formatDate, somenteDigitos } from "@/lib/utils";
 
 export default async function ReclamacoesPage({
   searchParams,
@@ -20,15 +20,20 @@ export default async function ReclamacoesPage({
 }) {
   await requireSession();
   const params = await searchParams;
+  const termo = params.q?.trim() || "";
+  const cpfBusca = somenteDigitos(termo);
 
   const items = await prisma.reclamacao.findMany({
     where: {
       ...(params.status ? { status: params.status as never } : {}),
-      ...(params.q
+      ...(termo
         ? {
             OR: [
-              { protocolo: { contains: params.q, mode: "insensitive" } },
-              { pacienteNome: { contains: params.q, mode: "insensitive" } },
+              { protocolo: { contains: termo, mode: "insensitive" } },
+              { pacienteNome: { contains: termo, mode: "insensitive" } },
+              ...(cpfBusca
+                ? [{ pacienteCpf: { contains: cpfBusca } }]
+                : []),
             ],
           }
         : {}),

@@ -16,7 +16,7 @@ import {
   statusTratamentoColors,
   statusTratamentoLabels,
 } from "@/lib/labels";
-import { formatDate } from "@/lib/utils";
+import { formatCpf, formatDate } from "@/lib/utils";
 
 const historicoAcaoLabels: Record<string, string> = {
   ABERTURA: "Abertura",
@@ -122,6 +122,10 @@ export default async function ReclamacaoDetalhePage({
             <div>
               <p className="text-[var(--muted)]">Paciente</p>
               <p className="font-medium">{item.pacienteNome}</p>
+            </div>
+            <div>
+              <p className="text-[var(--muted)]">CPF</p>
+              <p className="font-medium">{formatCpf(item.pacienteCpf)}</p>
             </div>
             <div>
               <p className="text-[var(--muted)]">Contato</p>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createReclamacao } from "@/app/actions";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,7 @@ import {
   variantFromMessage,
 } from "@/components/feedback-modal";
 import { canalLabels, prioridadeLabels } from "@/lib/labels";
+import { mascaraCpf, mascaraTelefone } from "@/lib/utils";
 
 export function ReclamacaoNovaForm({
   clinicas,
@@ -21,7 +22,7 @@ export function ReclamacaoNovaForm({
   servicos,
 }: {
   clinicas: { id: string; name: string; city: string; state: string }[];
-  usuarios: { id: string; name: string }[];
+  usuarios: { id: string; name: string; clinicId: string | null }[];
   motivos: { id: string; descricao: string }[];
   servicos: { id: string; descricao: string }[];
 }) {
@@ -32,7 +33,19 @@ export function ReclamacaoNovaForm({
   const [servicoId, setServicoId] = useState("");
   const [prioridade, setPrioridade] = useState("MEDIA");
   const [responsavelId, setResponsavelId] = useState("");
+  const [cpf, setCpf] = useState("");
+  const [contato, setContato] = useState("");
   const [erro, setErro] = useState("");
+
+  const responsaveisClinica = useMemo(
+    () => usuarios.filter((u) => u.clinicId === clinicId),
+    [usuarios, clinicId]
+  );
+
+  function aoSelecionarClinica(id: string) {
+    setClinicId(id);
+    setResponsavelId("");
+  }
 
   async function cadastrar(formData: FormData) {
     const result = await createReclamacao(formData);
@@ -51,8 +64,28 @@ export function ReclamacaoNovaForm({
           <Input id="pacienteNome" name="pacienteNome" required />
         </div>
         <div className="space-y-2">
+          <Label htmlFor="pacienteCpf">CPF</Label>
+          <Input
+            id="pacienteCpf"
+            name="pacienteCpf"
+            inputMode="numeric"
+            autoComplete="off"
+            placeholder="000.000.000-00"
+            value={cpf}
+            onChange={(e) => setCpf(mascaraCpf(e.target.value))}
+          />
+        </div>
+        <div className="space-y-2">
           <Label htmlFor="pacienteContato">Contato</Label>
-          <Input id="pacienteContato" name="pacienteContato" />
+          <Input
+            id="pacienteContato"
+            name="pacienteContato"
+            inputMode="tel"
+            autoComplete="tel"
+            placeholder="(00) 00000-0000"
+            value={contato}
+            onChange={(e) => setContato(mascaraTelefone(e.target.value))}
+          />
         </div>
         <div className="space-y-2">
           <Label htmlFor="clinicId">Clínica</Label>
@@ -66,7 +99,7 @@ export function ReclamacaoNovaForm({
               value: c.id,
               label: `${c.name} — ${c.city}/${c.state}`,
             }))}
-            onChange={setClinicId}
+            onChange={aoSelecionarClinica}
           />
         </div>
         <div className="space-y-2">
@@ -133,9 +166,19 @@ export function ReclamacaoNovaForm({
             id="responsavelId"
             name="responsavelId"
             required
+            disabled={!clinicId}
             value={responsavelId}
-            placeholder="Selecione ou pesquise o responsável"
-            options={usuarios.map((u) => ({ value: u.id, label: u.name }))}
+            placeholder={
+              clinicId
+                ? responsaveisClinica.length > 0
+                  ? "Selecione ou pesquise o responsável"
+                  : "Nenhum usuário nesta clínica"
+                : "Selecione a clínica primeiro"
+            }
+            options={responsaveisClinica.map((u) => ({
+              value: u.id,
+              label: u.name,
+            }))}
             onChange={setResponsavelId}
           />
         </div>

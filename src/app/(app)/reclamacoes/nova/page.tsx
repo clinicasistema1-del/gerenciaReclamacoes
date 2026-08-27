@@ -38,7 +38,11 @@ export default async function NovaReclamacaoPage() {
               city: c.city,
               state: c.state,
             }))}
-            usuarios={usuarios.map((u) => ({ id: u.id, name: u.name }))}
+            usuarios={usuarios.map((u) => ({
+              id: u.id,
+              name: u.name,
+              clinicId: u.clinicId,
+            }))}
             motivos={motivos.map((m) => ({
               id: m.id,
               descricao: m.descricao,

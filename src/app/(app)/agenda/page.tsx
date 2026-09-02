@@ -83,7 +83,7 @@ const colunasReclamacao: ColunaConfig[] = [
   {
     key: "concluidas",
     title: "Concluídas na semana",
-    hint: "Encerradas nos últimos 7 dias",
+    hint: "Encerradas na semana vigente (seg–dom)",
     icon: CheckCircle2,
     header: "border-emerald-200 bg-emerald-50",
     accent: "bg-emerald-500",
@@ -122,7 +122,7 @@ const colunasTratamento: ColunaConfig[] = [
   {
     key: "finalizados",
     title: "Finalizados na semana",
-    hint: "Concluídos nos últimos 7 dias",
+    hint: "Concluídos na semana vigente (seg–dom)",
     icon: CheckCircle2,
     header: "border-emerald-200 bg-emerald-50",
     accent: "bg-emerald-500",
@@ -142,6 +142,27 @@ function boundsDiaSaoPaulo(ref = new Date()) {
   const d = parts.find((p) => p.type === "day")!.value;
   const inicio = new Date(`${y}-${m}-${d}T00:00:00-03:00`);
   const fim = new Date(`${y}-${m}-${d}T23:59:59.999-03:00`);
+  return { inicio, fim };
+}
+
+function boundsSemanaVigenteSaoPaulo(ref = new Date()) {
+  const { inicio: inicioHoje } = boundsDiaSaoPaulo(ref);
+  const weekday = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Sao_Paulo",
+    weekday: "short",
+  }).format(ref);
+  const diasDesdeSegunda: Record<string, number> = {
+    Mon: 0,
+    Tue: 1,
+    Wed: 2,
+    Thu: 3,
+    Fri: 4,
+    Sat: 5,
+    Sun: 6,
+  };
+  const offset = diasDesdeSegunda[weekday] ?? 0;
+  const inicio = new Date(inicioHoje.getTime() - offset * 24 * 60 * 60 * 1000);
+  const fim = new Date(inicio.getTime() + 7 * 24 * 60 * 60 * 1000 - 1);
   return { inicio, fim };
 }
 
@@ -239,8 +260,8 @@ export default async function AgendaPage() {
   await requireSession();
   const agora = new Date();
   const em24h = new Date(Date.now() + 24 * 60 * 60 * 1000);
-  const semana = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
   const { inicio: inicioHoje, fim: fimHoje } = boundsDiaSaoPaulo(agora);
+  const { inicio: inicioSemana, fim: fimSemana } = boundsSemanaVigenteSaoPaulo(agora);
 
   const includeReclamacao = {
     clinic: { select: { name: true } },
@@ -307,7 +328,7 @@ export default async function AgendaPage() {
     prisma.reclamacao.findMany({
       where: {
         status: { in: ["CONCLUIDA", "ENCERRADA"] },
-        concluidaEm: { gte: semana },
+        concluidaEm: { gte: inicioSemana, lte: fimSemana },
       },
       include: includeReclamacao,
       orderBy: { concluidaEm: "desc" },
@@ -342,7 +363,7 @@ export default async function AgendaPage() {
     prisma.tratamento.findMany({
       where: {
         status: "CONCLUIDO",
-        finalizadoEm: { gte: semana },
+        finalizadoEm: { gte: inicioSemana, lte: fimSemana },
       },
       include: includeTratamento,
       orderBy: { finalizadoEm: "desc" },

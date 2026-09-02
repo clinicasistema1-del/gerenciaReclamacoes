@@ -15,7 +15,20 @@ import { Button } from "@/components/ui/button";
 export default async function HomePage() {
   await requireSession();
 
-  const [abertas, atrasadas, vencem24h, concluidasSemana] = await Promise.all([
+  const agora = new Date();
+  const inicioMes = new Date(agora.getFullYear(), agora.getMonth(), 1);
+  const inicioAno = new Date(agora.getFullYear(), 0, 1);
+  const statusConcluidas = ["CONCLUIDA", "ENCERRADA"] as const;
+
+  const [
+    abertas,
+    atrasadas,
+    vencem24h,
+    concluidasSemana,
+    concluidasMes,
+    concluidasAno,
+    concluidasTotal,
+  ] = await Promise.all([
     prisma.reclamacao.count({
       where: {
         status: {
@@ -48,9 +61,24 @@ export default async function HomePage() {
     }),
     prisma.reclamacao.count({
       where: {
-        status: { in: ["CONCLUIDA", "ENCERRADA"] },
+        status: { in: [...statusConcluidas] },
         concluidaEm: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) },
       },
+    }),
+    prisma.reclamacao.count({
+      where: {
+        status: { in: [...statusConcluidas] },
+        concluidaEm: { gte: inicioMes },
+      },
+    }),
+    prisma.reclamacao.count({
+      where: {
+        status: { in: [...statusConcluidas] },
+        concluidaEm: { gte: inicioAno },
+      },
+    }),
+    prisma.reclamacao.count({
+      where: { status: { in: [...statusConcluidas] } },
     }),
   ]);
 
@@ -63,6 +91,24 @@ export default async function HomePage() {
       value: concluidasSemana,
       icon: CheckCircle2,
       tone: "text-emerald-700",
+    },
+    {
+      label: "Concluídas no mês",
+      value: concluidasMes,
+      icon: CheckCircle2,
+      tone: "text-emerald-700",
+    },
+    {
+      label: "Concluídas no ano",
+      value: concluidasAno,
+      icon: CheckCircle2,
+      tone: "text-emerald-800",
+    },
+    {
+      label: "Concluídas total",
+      value: concluidasTotal,
+      icon: CheckCircle2,
+      tone: "text-teal-800",
     },
   ];
 

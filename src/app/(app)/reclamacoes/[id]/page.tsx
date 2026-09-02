@@ -16,6 +16,7 @@ import {
   statusTratamentoColors,
   statusTratamentoLabels,
 } from "@/lib/labels";
+import { differenceInCalendarDays } from "date-fns";
 import { formatCpf, formatDate } from "@/lib/utils";
 
 const historicoAcaoLabels: Record<string, string> = {
@@ -94,6 +95,11 @@ export default async function ReclamacaoDetalhePage({
   const responsavelPadraoId =
     item.responsavel?.id || item.criadoPor.id;
 
+  const diasEmAberto = Math.max(
+    0,
+    differenceInCalendarDays(new Date(), item.createdAt)
+  );
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
@@ -148,25 +154,6 @@ export default async function ReclamacaoDetalhePage({
             <div>
               <p className="text-[var(--muted)]">Serviço</p>
               <p className="font-medium">{item.servico?.descricao || "—"}</p>
-            </div>
-            <div>
-              <p className="text-[var(--muted)]">Etapa atual</p>
-              <p className="font-medium">{item.etapa?.nome || "—"}</p>
-            </div>
-            <div>
-              <p className="text-[var(--muted)]">Responsável da etapa</p>
-              <p className="font-medium">
-                {item.etapa?.usuario?.name || "—"}
-              </p>
-              {item.etapa?.usuario?.email && (
-                <p className="text-xs text-[var(--muted)]">
-                  {item.etapa.usuario.email}
-                </p>
-              )}
-            </div>
-            <div>
-              <p className="text-[var(--muted)]">Prazo</p>
-              <p className="font-medium">{formatDate(item.prazoEm)}</p>
             </div>
             <div>
               <p className="text-[var(--muted)]">
@@ -267,6 +254,48 @@ export default async function ReclamacaoDetalhePage({
               </p>
             </div>
           ))}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Esteira</CardTitle>
+          <p className="text-sm text-[var(--muted)]">
+            Dados da etapa atual na esteira de atendimento
+          </p>
+        </CardHeader>
+        <CardContent className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 text-sm">
+          <div>
+            <p className="text-[var(--muted)]">Número da etapa</p>
+            <p className="font-medium">
+              {item.etapa
+                ? `${item.etapa.ordem} · ${item.etapa.nome}`
+                : "—"}
+            </p>
+          </div>
+          <div>
+            <p className="text-[var(--muted)]">Responsável pela etapa</p>
+            <p className="font-medium">
+              {item.etapa?.usuario?.name || "—"}
+            </p>
+            {item.etapa?.usuario?.email && (
+              <p className="text-xs text-[var(--muted)]">
+                {item.etapa.usuario.email}
+              </p>
+            )}
+          </div>
+          <div>
+            <p className="text-[var(--muted)]">Prazo</p>
+            <p className="font-medium">{formatDate(item.prazoEm)}</p>
+          </div>
+          <div>
+            <p className="text-[var(--muted)]">Dias em aberto</p>
+            <p className="font-medium">
+              {diasEmAberto === 1
+                ? "1 dia"
+                : `${diasEmAberto} dias`}
+            </p>
+          </div>
         </CardContent>
       </Card>
     </div>

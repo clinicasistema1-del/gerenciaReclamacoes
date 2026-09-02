@@ -95,9 +95,14 @@ export default async function ReclamacaoDetalhePage({
   const responsavelPadraoId =
     item.responsavel?.id || item.criadoPor.id;
 
+  const dataFimDiasEmAberto =
+    item.encerradaEm || item.concluidaEm || new Date();
   const diasEmAberto = Math.max(
     0,
-    differenceInCalendarDays(new Date(), item.createdAt)
+    differenceInCalendarDays(
+      jaEncerrada ? dataFimDiasEmAberto : new Date(),
+      item.createdAt
+    )
   );
 
   return (

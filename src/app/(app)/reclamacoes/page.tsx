@@ -4,6 +4,7 @@ import { requireSession } from "@/lib/session";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Paginacao } from "@/components/paginacao";
 import { ReclamacoesFiltros } from "@/components/reclamacoes-filtros";
 import {
   canalLabels,
@@ -11,33 +12,38 @@ import {
   statusColors,
   statusLabels,
 } from "@/lib/labels";
+import { parsePage, paginationMeta } from "@/lib/pagination";
 import { formatDate, somenteDigitos } from "@/lib/utils";
 
 export default async function ReclamacoesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string; q?: string }>;
+  searchParams: Promise<{ status?: string; q?: string; page?: string }>;
 }) {
   await requireSession();
   const params = await searchParams;
   const termo = params.q?.trim() || "";
   const cpfBusca = somenteDigitos(termo);
+  const page = parsePage(params.page);
+
+  const where = {
+    ...(params.status ? { status: params.status as never } : {}),
+    ...(termo
+      ? {
+          OR: [
+            { protocolo: { contains: termo, mode: "insensitive" as const } },
+            { pacienteNome: { contains: termo, mode: "insensitive" as const } },
+            ...(cpfBusca ? [{ pacienteCpf: { contains: cpfBusca } }] : []),
+          ],
+        }
+      : {}),
+  };
+
+  const total = await prisma.reclamacao.count({ where });
+  const meta = paginationMeta(total, page);
 
   const items = await prisma.reclamacao.findMany({
-    where: {
-      ...(params.status ? { status: params.status as never } : {}),
-      ...(termo
-        ? {
-            OR: [
-              { protocolo: { contains: termo, mode: "insensitive" } },
-              { pacienteNome: { contains: termo, mode: "insensitive" } },
-              ...(cpfBusca
-                ? [{ pacienteCpf: { contains: cpfBusca } }]
-                : []),
-            ],
-          }
-        : {}),
-    },
+    where,
     include: {
       clinic: true,
       criadoPor: true,
@@ -46,7 +52,11 @@ export default async function ReclamacoesPage({
       motivo: true,
     },
     orderBy: { createdAt: "desc" },
+    skip: meta.skip,
+    take: meta.take,
   });
+
+  const filterParams = { q: params.q, status: params.status };
 
   return (
     <div className="space-y-6">
@@ -133,6 +143,15 @@ export default async function ReclamacoesPage({
           </tbody>
         </table>
       </div>
+
+      <Paginacao
+        basePath="/reclamacoes"
+        page={meta.page}
+        totalPages={meta.totalPages}
+        total={meta.total}
+        pageSize={meta.pageSize}
+        params={filterParams}
+      />
     </div>
   );
 }

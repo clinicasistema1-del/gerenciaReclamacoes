@@ -60,7 +60,7 @@ export default function LoginPage() {
                 name="email"
                 type="email"
                 required
-                defaultValue="admin@gmail.com"
+                autoComplete="username"
               />
             </div>
             <div className="space-y-2">
@@ -70,7 +70,7 @@ export default function LoginPage() {
                 name="password"
                 type="password"
                 required
-                defaultValue="admin"
+                autoComplete="current-password"
               />
             </div>
             {error && <p className="text-sm text-red-600">{error}</p>}

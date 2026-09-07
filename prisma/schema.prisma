@@ -132,6 +132,7 @@ model Clinic {
   users       User[]
   reclamacoes Reclamacao[]
   tratamentos Tratamento[]
+  etapasEsteira EsteiraEtapa[]
 
   @@map("clinic")
 }
@@ -157,6 +158,8 @@ model EsteiraEtapa {
   nome         String
   ordem        Int
   prazoDias    Int
+  clinicId     String
+  clinic       Clinic   @relation(fields: [clinicId], references: [id])
   usuarioId    String
   usuario      User     @relation(fields: [usuarioId], references: [id])
   emailAviso   Boolean  @default(true)
@@ -165,7 +168,8 @@ model EsteiraEtapa {
   updatedAt    DateTime @updatedAt
   reclamacoes  Reclamacao[]
 
-  @@unique([ordem])
+  @@unique([clinicId, ordem])
+  @@index([clinicId])
   @@map("esteira_etapa")
 }
 

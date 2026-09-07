@@ -18,7 +18,13 @@ type Etapa = {
   reclamacoes: number;
 };
 
-export function EsteiraLista({ etapas }: { etapas: Etapa[] }) {
+export function EsteiraLista({
+  clinicId,
+  etapas,
+}: {
+  clinicId: string;
+  etapas: Etapa[];
+}) {
   const [sucesso, setSucesso] = useState("");
   const [erro, setErro] = useState("");
   const [excluindo, setExcluindo] = useState<Etapa | null>(null);
@@ -79,7 +85,7 @@ export function EsteiraLista({ etapas }: { etapas: Etapa[] }) {
                   <td className="px-4 py-3 tabular-nums">{etapa.ordem}</td>
                   <td className="px-4 py-3">
                     <Link
-                      href={`/admin/esteira/${etapa.id}`}
+                      href={`/admin/esteira/${etapa.id}?clinicId=${encodeURIComponent(clinicId)}`}
                       className="font-medium text-black hover:underline"
                     >
                       {etapa.nome}

@@ -348,16 +348,28 @@ export async function createEsteira(formData: FormData): Promise<ActionResult> {
   if (!Number.isFinite(ordem) || ordem < 1) {
     return actionFail("Informe uma ordem válida.");
   }
+  const clinicId = String(formData.get("clinicId") || "");
+  if (!clinicId) {
+    return actionFail("Selecione a clínica da esteira.");
+  }
   const usuarioId = String(formData.get("usuarioId") || "");
   if (!usuarioId) {
     return actionFail("Selecione o usuário do alerta.");
   }
 
-  const ordemExistente = await prisma.esteiraEtapa.findUnique({
-    where: { ordem },
+  const clinica = await prisma.clinic.findFirst({
+    where: { id: clinicId, active: true },
+    select: { id: true },
+  });
+  if (!clinica) {
+    return actionFail("Clínica inválida.");
+  }
+
+  const ordemExistente = await prisma.esteiraEtapa.findFirst({
+    where: { clinicId, ordem },
   });
   if (ordemExistente) {
-    return actionFail("Já existe uma etapa com esta ordem.");
+    return actionFail("Já existe uma etapa com esta ordem nesta clínica.");
   }
 
   return runAction(async () => {
@@ -366,6 +378,7 @@ export async function createEsteira(formData: FormData): Promise<ActionResult> {
         nome: String(formData.get("nome")),
         ordem,
         prazoDias: Number(formData.get("prazoDias")),
+        clinicId,
         usuarioId,
         emailAviso: true,
         active: formData.get("active") === "on",
@@ -387,11 +400,23 @@ export async function updateEsteira(formData: FormData): Promise<ActionResult> {
     return actionFail("Selecione o usuário do alerta.");
   }
 
+  const etapaAtual = await prisma.esteiraEtapa.findUnique({
+    where: { id },
+    select: { clinicId: true },
+  });
+  if (!etapaAtual) {
+    return actionFail("Etapa não encontrada.");
+  }
+
   const ordemExistente = await prisma.esteiraEtapa.findFirst({
-    where: { ordem, NOT: { id } },
+    where: {
+      clinicId: etapaAtual.clinicId,
+      ordem,
+      NOT: { id },
+    },
   });
   if (ordemExistente) {
-    return actionFail("Já existe uma etapa com esta ordem.");
+    return actionFail("Já existe uma etapa com esta ordem nesta clínica.");
   }
 
   return runAction(async () => {
@@ -438,7 +463,6 @@ export async function createReclamacao(
 ): Promise<ActionResultWithId> {
   try {
     const session = await requireSession();
-    const etapa = await primeiraEtapa();
     const protocolo = await gerarProtocolo();
     const clinicId = String(formData.get("clinicId") || "");
     const pacienteNome = String(formData.get("pacienteNome") || "").trim();
@@ -459,6 +483,8 @@ export async function createReclamacao(
     if (!responsavelId) {
       return actionFail("Selecione o responsável pelo atendimento.");
     }
+
+    const etapa = await primeiraEtapa(clinicId);
 
     const [responsavel, motivo, servico] = await Promise.all([
       prisma.user.findFirst({
@@ -497,7 +523,7 @@ export async function createReclamacao(
         servicoId: servicoId || null,
         prioridade: String(formData.get("prioridade") || "MEDIA") as Prioridade,
         descricao,
-        etapaId: etapa?.id,
+        etapaId: etapa?.id ?? null,
         responsavelId,
         criadoPorId: session.user.id,
         prazoEm: null,

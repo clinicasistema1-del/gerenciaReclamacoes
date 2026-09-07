@@ -5,15 +5,26 @@ import { ReclamacaoNovaForm } from "@/components/reclamacao-nova-form";
 
 export default async function NovaReclamacaoPage() {
   await requireSession();
-  const [clinicas, usuarios, motivos, servicos] = await Promise.all([
-    prisma.clinic.findMany({
-      where: { active: true },
-      orderBy: { name: "asc" },
-    }),
-    prisma.user.findMany({ where: { active: true }, orderBy: { name: "asc" } }),
-    prisma.motivo.findMany({ orderBy: { descricao: "asc" } }),
-    prisma.servico.findMany({ orderBy: { descricao: "asc" } }),
-  ]);
+  const [clinicas, usuarios, motivos, servicos, etapasAtivas] =
+    await Promise.all([
+      prisma.clinic.findMany({
+        where: { active: true },
+        orderBy: { name: "asc" },
+      }),
+      prisma.user.findMany({
+        where: { active: true },
+        orderBy: { name: "asc" },
+      }),
+      prisma.motivo.findMany({ orderBy: { descricao: "asc" } }),
+      prisma.servico.findMany({ orderBy: { descricao: "asc" } }),
+      prisma.esteiraEtapa.findMany({
+        where: { active: true },
+        select: { clinicId: true },
+        distinct: ["clinicId"],
+      }),
+    ]);
+
+  const clinicasComEsteira = new Set(etapasAtivas.map((e) => e.clinicId));
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
@@ -37,6 +48,7 @@ export default async function NovaReclamacaoPage() {
               name: c.name,
               city: c.city,
               state: c.state,
+              temEsteira: clinicasComEsteira.has(c.id),
             }))}
             usuarios={usuarios.map((u) => ({
               id: u.id,

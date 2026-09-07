@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createReclamacao } from "@/app/actions";
 import { Button } from "@/components/ui/button";
@@ -21,12 +21,19 @@ export function ReclamacaoNovaForm({
   motivos,
   servicos,
 }: {
-  clinicas: { id: string; name: string; city: string; state: string }[];
+  clinicas: {
+    id: string;
+    name: string;
+    city: string;
+    state: string;
+    temEsteira: boolean;
+  }[];
   usuarios: { id: string; name: string; clinicId: string | null }[];
   motivos: { id: string; descricao: string }[];
   servicos: { id: string; descricao: string }[];
 }) {
   const router = useRouter();
+  const formRef = useRef<HTMLFormElement>(null);
   const [pacienteNome, setPacienteNome] = useState("");
   const [descricao, setDescricao] = useState("");
   const [clinicId, setClinicId] = useState("");
@@ -39,10 +46,16 @@ export function ReclamacaoNovaForm({
   const [contato, setContato] = useState("");
   const [enviando, setEnviando] = useState(false);
   const [erro, setErro] = useState("");
+  const [confirmacaoSemEsteira, setConfirmacaoSemEsteira] = useState(false);
 
   const responsaveisClinica = useMemo(
     () => usuarios.filter((u) => u.clinicId === clinicId),
     [usuarios, clinicId]
+  );
+
+  const clinicaSelecionada = useMemo(
+    () => clinicas.find((c) => c.id === clinicId) || null,
+    [clinicas, clinicId]
   );
 
   function aoSelecionarClinica(id: string) {
@@ -50,9 +63,10 @@ export function ReclamacaoNovaForm({
     setResponsavelId("");
   }
 
-  async function cadastrar(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    const formData = new FormData(e.currentTarget);
+  async function enviarFormulario() {
+    const form = formRef.current;
+    if (!form) return;
+    const formData = new FormData(form);
     setEnviando(true);
     const result = await createReclamacao(formData);
     setEnviando(false);
@@ -63,9 +77,27 @@ export function ReclamacaoNovaForm({
     router.push(`/reclamacoes/${result.id}`);
   }
 
+  async function cadastrar(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (clinicaSelecionada && !clinicaSelecionada.temEsteira) {
+      setConfirmacaoSemEsteira(true);
+      return;
+    }
+    await enviarFormulario();
+  }
+
+  async function continuarSemEsteira() {
+    setConfirmacaoSemEsteira(false);
+    await enviarFormulario();
+  }
+
   return (
     <>
-      <form onSubmit={cadastrar} className="grid gap-4 md:grid-cols-2">
+      <form
+        ref={formRef}
+        onSubmit={cadastrar}
+        className="grid gap-4 md:grid-cols-2"
+      >
         <div className="space-y-2 md:col-span-2">
           <Label htmlFor="pacienteNome">Nome do paciente</Label>
           <Input
@@ -211,6 +243,42 @@ export function ReclamacaoNovaForm({
           </Button>
         </div>
       </form>
+
+      {confirmacaoSemEsteira && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+          <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
+            <h2 className="text-lg font-semibold">
+              Esta clínica ainda não possui esteira de alertas
+            </h2>
+            <p className="mt-2 text-sm text-[var(--muted)]">
+              A clínica selecionada não tem etapas cadastradas. Sem esteira, a
+              reclamação será aberta sem prazos e avisos automáticos por
+              e-mail.
+            </p>
+            <p className="mt-2 text-sm text-[var(--muted)]">
+              Deseja continuar mesmo assim?
+            </p>
+            <div className="mt-4 flex justify-end gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setConfirmacaoSemEsteira(false)}
+                disabled={enviando}
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="button"
+                onClick={continuarSemEsteira}
+                disabled={enviando}
+              >
+                {enviando ? "Criando..." : "Continuar sem esteira"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {erro && (
         <FeedbackModal
           variant={variantFromMessage(erro)}

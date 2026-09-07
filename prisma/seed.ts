@@ -115,6 +115,7 @@ async function main() {
       nome: "Abertura SAC",
       ordem: 1,
       prazoDias: 1,
+      clinicId: "clinic-goiania",
       usuarioId: sac.id,
     },
     {
@@ -122,6 +123,7 @@ async function main() {
       nome: "Coordenação",
       ordem: 2,
       prazoDias: 2,
+      clinicId: "clinic-goiania",
       usuarioId: coord.id,
     },
     {
@@ -129,6 +131,7 @@ async function main() {
       nome: "Gerência da unidade",
       ordem: 3,
       prazoDias: 2,
+      clinicId: "clinic-goiania",
       usuarioId: admin.id,
     },
     {
@@ -136,6 +139,7 @@ async function main() {
       nome: "Diretoria",
       ordem: 4,
       prazoDias: 3,
+      clinicId: "clinic-goiania",
       usuarioId: admin.id,
     },
     {
@@ -143,6 +147,7 @@ async function main() {
       nome: "Parecer administração",
       ordem: 5,
       prazoDias: 2,
+      clinicId: "clinic-goiania",
       usuarioId: admin.id,
     },
   ];
@@ -196,13 +201,13 @@ async function main() {
         protocolo: "GRC-2026-000001",
         pacienteNome: "Maria Silva",
         pacienteContato: "(64) 99999-0000",
-        clinicId: clinicas[0].id,
+        clinicId: "clinic-goiania",
         canal: "WHATSAPP",
         motivoId: "QUALIDADE_TRATAMENTO",
         servicoId: "IMPLANTE",
         prioridade: "ALTA",
         descricao:
-          "Paciente reclama no WhatsApp sobre um procedimento realizado na unidade de Catalão.",
+          "Paciente reclama no WhatsApp sobre um procedimento realizado na unidade de Goiânia.",
         status: "EM_ANDAMENTO",
         etapaId: "etapa-1",
         responsavelId: admin.id,

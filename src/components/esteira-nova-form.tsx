@@ -14,8 +14,10 @@ const selectClass =
   "flex h-10 w-full rounded-md border border-[var(--border)] bg-white px-3 text-sm";
 
 export function EsteiraNovaForm({
+  clinicId,
   usuarios,
 }: {
+  clinicId: string;
   usuarios: { id: string; name: string }[];
 }) {
   const formRef = useRef<HTMLFormElement>(null);
@@ -35,6 +37,7 @@ export function EsteiraNovaForm({
   return (
     <>
       <form ref={formRef} action={cadastrar} className="grid gap-3 md:grid-cols-4">
+        <input type="hidden" name="clinicId" value={clinicId} />
         <div className="space-y-2 md:col-span-2">
           <Label htmlFor="nome">Nome</Label>
           <Input id="nome" name="nome" required />

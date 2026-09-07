@@ -16,9 +16,9 @@ export async function gerarProtocolo() {
   return `GRC-${year}-${String(count + 1).padStart(6, "0")}`;
 }
 
-export async function primeiraEtapa() {
+export async function primeiraEtapa(clinicId: string) {
   return prisma.esteiraEtapa.findFirst({
-    where: { active: true },
+    where: { clinicId, active: true },
     orderBy: { ordem: "asc" },
   });
 }
@@ -121,10 +121,19 @@ export async function avancarEtapa(
   });
   if (!reclamacao) throw new Error("Reclamação não encontrada");
 
+  if (
+    !reclamacao.etapaId ||
+    !reclamacao.etapa ||
+    reclamacao.etapa.clinicId !== reclamacao.clinicId
+  ) {
+    return reclamacao;
+  }
+
   const proxima = await prisma.esteiraEtapa.findFirst({
     where: {
+      clinicId: reclamacao.clinicId,
       active: true,
-      ordem: { gt: reclamacao.etapa?.ordem ?? 0 },
+      ordem: { gt: reclamacao.etapa.ordem },
     },
     orderBy: { ordem: "asc" },
     include: { usuario: true },
@@ -146,9 +155,7 @@ export async function avancarEtapa(
       },
     });
 
-    if (reclamacao.etapa) {
-      await entradaNaEtapa(reclamacaoId, reclamacao.etapa);
-    }
+    await entradaNaEtapa(reclamacaoId, reclamacao.etapa);
 
     return prisma.reclamacao.findUnique({ where: { id: reclamacaoId } });
   }
@@ -179,20 +186,37 @@ async function enviarAlertaParecer(item: {
   pacienteNome: string;
   descricao: string;
   prazoEm: Date | null;
+  clinicId: string;
   clinic: { name: string };
-  etapa: { nome: string; ordem: number } | null;
+  etapa: {
+    id: string;
+    nome: string;
+    ordem: number;
+    clinicId: string;
+    usuario?: { email: string; name: string } | null;
+  } | null;
   responsavel: { name: string } | null;
   criadoPor: { name: string };
 }) {
   const agora = new Date();
-  const etapaOrdem = item.etapa?.ordem ?? 1;
-  const etapaAlvo = await prisma.esteiraEtapa.findFirst({
-    where: { active: true, ordem: etapaOrdem },
-    include: { usuario: true },
-  });
+  if (!item.etapa || item.etapa.clinicId !== item.clinicId) {
+    return { enviado: false, etapaOrdem: item.etapa?.ordem ?? 0 };
+  }
+
+  const etapaAlvo =
+    item.etapa.usuario !== undefined
+      ? item.etapa
+      : await prisma.esteiraEtapa.findFirst({
+          where: {
+            id: item.etapa.id,
+            clinicId: item.clinicId,
+            active: true,
+          },
+          include: { usuario: true },
+        });
 
   if (!etapaAlvo?.usuario?.email) {
-    return { enviado: false, etapaOrdem };
+    return { enviado: false, etapaOrdem: item.etapa.ordem };
   }
 
   const result = await sendSlaEmail({
@@ -200,7 +224,7 @@ async function enviarAlertaParecer(item: {
     protocolo: item.protocolo,
     pacienteNome: item.pacienteNome,
     clinica: item.clinic.name,
-    etapa: item.etapa?.nome ?? etapaAlvo.nome,
+    etapa: item.etapa.nome,
     prazoEm: item.prazoEm ?? agora,
     descricao: item.descricao,
     responsavelAtendimento: item.responsavel?.name || item.criadoPor.name,
@@ -227,10 +251,11 @@ export async function processarEscalonamentos() {
         in: ["ABERTA", "EM_ANDAMENTO", "ATRASADA", "AGUARDANDO_PARECER"],
       },
       prazoEm: { lt: agora },
+      etapaId: { not: null },
     },
     include: {
       clinic: true,
-      etapa: true,
+      etapa: { include: { usuario: true } },
       responsavel: true,
       criadoPor: true,
     },
@@ -239,8 +264,14 @@ export async function processarEscalonamentos() {
   let enviados = 0;
   let avancadas = 0;
   let realertas = 0;
+  let ignoradas = 0;
 
   for (const item of candidatas) {
+    if (!item.etapa || item.etapa.clinicId !== item.clinicId) {
+      ignoradas += 1;
+      continue;
+    }
+
     if (item.status === "AGUARDANDO_PARECER") {
       const alerta = await enviarAlertaParecer(item);
       if (alerta.enviado) {
@@ -269,5 +300,11 @@ export async function processarEscalonamentos() {
     avancadas += 1;
   }
 
-  return { processadas: candidatas.length, enviados, avancadas, realertas };
+  return {
+    processadas: candidatas.length,
+    enviados,
+    avancadas,
+    realertas,
+    ignoradas,
+  };
 }

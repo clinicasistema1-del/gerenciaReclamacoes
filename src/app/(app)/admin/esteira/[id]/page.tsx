@@ -8,16 +8,19 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default async function EsteiraDetalhePage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ clinicId?: string }>;
 }) {
   await requireAdmin();
   const { id } = await params;
+  const query = await searchParams;
 
   const [etapa, usuarios] = await Promise.all([
     prisma.esteiraEtapa.findUnique({
       where: { id },
-      include: { usuario: true },
+      include: { usuario: true, clinic: true },
     }),
     prisma.user.findMany({
       where: { active: true },
@@ -28,6 +31,9 @@ export default async function EsteiraDetalhePage({
 
   if (!etapa) notFound();
 
+  const clinicId = query.clinicId || etapa.clinicId;
+  const voltarHref = `/admin/esteira?clinicId=${encodeURIComponent(clinicId)}`;
+
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-4">
@@ -35,10 +41,12 @@ export default async function EsteiraDetalhePage({
           <h1 className="font-[family-name:var(--font-display)] text-3xl">
             {etapa.nome}
           </h1>
-          <p className="text-[var(--muted)]">Detalhes da etapa da esteira</p>
+          <p className="text-[var(--muted)]">
+            {etapa.clinic.name} · Detalhes da etapa da esteira
+          </p>
         </div>
         <Button variant="outline" asChild>
-          <Link href="/admin/esteira">Voltar</Link>
+          <Link href={voltarHref}>Voltar</Link>
         </Button>
       </div>
 

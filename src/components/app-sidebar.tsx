@@ -55,15 +55,15 @@ export function AppSidebar({
 
   return (
     <aside className="flex h-dvh w-64 shrink-0 flex-col border-r border-[var(--border)] bg-[var(--sidebar)] text-white">
-      <div className="flex flex-col gap-3 border-b border-white/10 px-5 py-6">
+      <div className="flex flex-col items-center gap-3 border-b border-white/10 px-4 py-6 text-center">
         <img
           src="/logo-sorria.png"
           alt="Grupo Sorria"
-          className="h-12 w-auto max-w-full rounded-md object-contain"
+          className="h-14 w-auto max-w-[220px] object-contain"
         />
-        <h1 className="font-[family-name:var(--font-display)] text-2xl">
+        <p className="font-[family-name:var(--font-display)] text-lg text-white/90">
           Sistema GRC
-        </h1>
+        </p>
       </div>
       <nav className="flex-1 space-y-1 overflow-y-auto p-3">
         {links.map((item) => {

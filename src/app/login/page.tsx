@@ -6,7 +6,7 @@ import { authClient } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardTitle } from "@/components/ui/card";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -34,21 +34,23 @@ export default function LoginPage() {
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[linear-gradient(135deg,#ffce00_0%,#fff176_100%)] px-4">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(0,0,0,0.12),transparent_40%),radial-gradient(circle_at_80%_70%,rgba(255,255,255,0.35),transparent_35%)]" />
-      <Card className="relative w-full max-w-md border-0 shadow-2xl">
-        <CardHeader className="flex flex-col items-center text-center">
+      <Card className="relative w-full max-w-md overflow-hidden border-0 shadow-2xl">
+        <div className="flex flex-col items-center bg-black px-6 py-8 text-center">
           <img
             src="/logo-sorria.png"
             alt="Grupo Sorria"
-            className="mb-3 h-12 w-auto max-w-[220px] rounded-md object-contain"
+            className="h-16 w-auto max-w-[280px] object-contain"
           />
-          <CardTitle className="font-[family-name:var(--font-display)] text-3xl">
-            Sistema GRC
-          </CardTitle>
-          <p className="text-sm text-[var(--muted)]">
-            Acesse a central de gestão de reclamações
-          </p>
-        </CardHeader>
-        <CardContent>
+        </div>
+        <CardContent className="space-y-5 p-6 pt-6">
+          <div className="space-y-1 text-center">
+            <CardTitle className="font-[family-name:var(--font-display)] text-3xl">
+              Sistema GRC
+            </CardTitle>
+            <p className="text-sm text-[var(--muted)]">
+              Acesse a central de gestão de reclamações
+            </p>
+          </div>
           <form onSubmit={onSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">E-mail</Label>

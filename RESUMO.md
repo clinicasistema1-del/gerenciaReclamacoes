@@ -1,4 +1,4 @@
-# Resumo do SISTEMA GRC — Grupo Sorria
+# Resumo do Sistema GRC — Grupo Sorria
 
 Documento de acompanhamento do que foi especificado, implementado e deixado de fora do MVP.
 

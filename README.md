@@ -1,4 +1,4 @@
-# SISTEMA GRC · Grupo Sorria
+# Sistema GRC · Grupo Sorria
 
 Gestão de reclamações para franquias de clínicas odontológicas.
 

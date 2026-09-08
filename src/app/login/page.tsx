@@ -35,17 +35,14 @@ export default function LoginPage() {
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[linear-gradient(135deg,#ffce00_0%,#fff176_100%)] px-4">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(0,0,0,0.12),transparent_40%),radial-gradient(circle_at_80%_70%,rgba(255,255,255,0.35),transparent_35%)]" />
       <Card className="relative w-full max-w-md border-0 shadow-2xl">
-        <CardHeader>
+        <CardHeader className="flex flex-col items-center text-center">
           <img
             src="/logo-sorria.png"
-            alt="Sorria Goiás"
-            className="mb-3 h-14 w-14 rounded-md object-cover"
+            alt="Grupo Sorria"
+            className="mb-3 h-12 w-auto max-w-[220px] rounded-md object-contain"
           />
-          <p className="text-xs uppercase tracking-[0.2em] text-black">
-            Grupo Sorria
-          </p>
           <CardTitle className="font-[family-name:var(--font-display)] text-3xl">
-            SISTEMA GRC
+            Sistema GRC
           </CardTitle>
           <p className="text-sm text-[var(--muted)]">
             Acesse a central de gestão de reclamações

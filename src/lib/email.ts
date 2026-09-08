@@ -52,7 +52,7 @@ function formatPrazo(prazoEm: Date) {
 }
 
 function rodape() {
-  return `<p style="color:#5c5748;font-size:12px;">Este e-mail foi enviado automaticamente pelo SISTEMA GRC.</p>`;
+  return `<p style="color:#5c5748;font-size:12px;">Este e-mail foi enviado automaticamente pelo Sistema GRC.</p>`;
 }
 
 function botaoAbrir(appUrl: string, reclamacaoId?: string) {
@@ -62,7 +62,7 @@ function botaoAbrir(appUrl: string, reclamacaoId?: string) {
   return `
     <p>
       <a href="${href}" style="display:inline-block;background:#ffce00;color:#111;padding:10px 16px;border-radius:6px;text-decoration:none;font-weight:600;">
-        Abrir SISTEMA GRC
+        Abrir Sistema GRC
       </a>
     </p>
   `;

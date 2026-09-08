@@ -46,6 +46,7 @@ export function UsuarioDetalheForm({
 }) {
   const router = useRouter();
   const [cpf, setCpf] = useState(cpfMascarado(usuario.cpf));
+  const [novaSenha, setNovaSenha] = useState("");
   const [mostrarSenha, setMostrarSenha] = useState(false);
   const [erro, setErro] = useState("");
   const [sucesso, setSucesso] = useState("");
@@ -58,6 +59,7 @@ export function UsuarioDetalheForm({
       setErro(result.error);
       return;
     }
+    setNovaSenha("");
     setSucesso("Usuário atualizado.");
     router.refresh();
   }
@@ -135,6 +137,9 @@ export function UsuarioDetalheForm({
             type="password"
             minLength={5}
             placeholder="Deixe em branco para manter"
+            value={novaSenha}
+            onChange={(e) => setNovaSenha(e.target.value)}
+            autoComplete="new-password"
           />
         </div>
         <div className="space-y-2">

@@ -126,7 +126,7 @@ export default async function HomePage() {
           rápido e com mais controle.
         </p>
         <div className="mt-6 flex flex-wrap gap-3">
-          <Button asChild className="bg-black text-[var(--brand)] hover:bg-black/90">
+          <Button asChild className="bg-white text-black hover:bg-white/90">
             <Link href="/reclamacoes">Gestão de reclamações</Link>
           </Button>
           <Button asChild variant="outline" className="border-black/20 bg-white/50 text-black hover:bg-white">

@@ -17,10 +17,10 @@ export const metadata: Metadata = {
   description: "Gestão de reclamações para franquias de clínicas odontológicas",
   icons: {
     icon: [
-      { url: "/favicon.ico", sizes: "32x32" },
+      { url: "/favicon.ico", sizes: "any" },
       { url: "/favicon.png", type: "image/png", sizes: "512x512" },
     ],
-    apple: "/favicon.png",
+    apple: [{ url: "/favicon.png", sizes: "180x180" }],
   },
 };
 

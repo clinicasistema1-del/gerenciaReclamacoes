@@ -36,16 +36,22 @@ export default function LoginPage() {
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(0,0,0,0.12),transparent_40%),radial-gradient(circle_at_80%_70%,rgba(255,255,255,0.35),transparent_35%)]" />
       <Card className="relative w-full max-w-md border-0 shadow-2xl">
         <CardContent className="space-y-5 p-6 pt-6">
-          <div className="space-y-2 text-center">
-            <p className="font-[family-name:var(--font-display)] text-4xl font-semibold tracking-wide text-black">
-              GRUPO SORRIA
-            </p>
-            <CardTitle className="font-[family-name:var(--font-display)] text-2xl">
-              Sistema GRC
-            </CardTitle>
-            <p className="text-sm text-[var(--muted)]">
-              Acesse a central de gestão de reclamações
-            </p>
+          <div className="flex flex-col items-center space-y-4 text-center">
+            <div className="inline-flex items-center justify-center bg-[linear-gradient(135deg,#ffce00_0%,#fff176_100%)] px-5 py-4">
+              <img
+                src="/logo-sorria-login.png"
+                alt="Grupo Sorria"
+                className="h-14 w-auto max-w-[260px] object-contain"
+              />
+            </div>
+            <div className="space-y-1">
+              <CardTitle className="font-[family-name:var(--font-display)] text-2xl">
+                Sistema GRC
+              </CardTitle>
+              <p className="text-sm text-[var(--muted)]">
+                Acesse a central de gestão de reclamações
+              </p>
+            </div>
           </div>
           <form onSubmit={onSubmit} className="space-y-4">
             <div className="space-y-2">

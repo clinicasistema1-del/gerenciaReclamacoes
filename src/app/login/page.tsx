@@ -37,11 +37,13 @@ export default function LoginPage() {
       <Card className="relative w-full max-w-md border-0 shadow-2xl">
         <CardContent className="space-y-5 p-6 pt-6">
           <div className="flex flex-col items-center space-y-4 text-center">
-            <div className="inline-flex items-center justify-center bg-[linear-gradient(135deg,#ffce00_0%,#fff176_100%)] px-5 py-4">
+            <div className="inline-flex items-center justify-center bg-black px-6 py-4">
               <img
-                src="/logo-sorria-login.png"
+                src="/logo-sorria.png"
                 alt="Grupo Sorria"
-                className="h-14 w-auto max-w-[260px] object-contain"
+                className="h-14 w-auto max-w-[280px] object-contain"
+                width={666}
+                height={204}
               />
             </div>
             <div className="space-y-1">
